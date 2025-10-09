@@ -1,5 +1,7 @@
+"use client";
 import { Plus } from "lucide-react";
-
+import { addNote } from "../lib/features/notesSlice";
+import { useAppDispatch } from "../lib/hooks";
 interface ColorCircleProps {
   onClick: () => void;
   color: keyof typeof colorMap;
@@ -25,7 +27,13 @@ const ColorCircle = ({ onClick, color }: ColorCircleProps) => {
 };
 
 const NotesSidebar = () => {
+  const dispatch = useAppDispatch();
   const handleAddNote = (color: keyof typeof colorMap) => {
+    const newNote = {
+      id: Date.now(),
+      color,
+    };
+    dispatch(addNote(newNote));
   };
   return (
     <aside
