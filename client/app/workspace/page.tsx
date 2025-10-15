@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import WorkspaceCard from "../../components/WorkspaceCard";
 import axios from "axios";
-import { BACKEND_DOMAIN } from "../lib/constant";
+import { BACKEND_AUTH_DOMAIN } from "../lib/constant";
 import { useEffect, useState } from "react";
 
 const workspaceFeatures = [
@@ -45,7 +45,7 @@ const Workspace = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data } = await axios.get(`${BACKEND_DOMAIN}/auth/session`, {
+        const { data } = await axios.get(`${BACKEND_AUTH_DOMAIN}/auth/session`, {
           withCredentials: true,
         });
         console.log("Authentication status:", data);

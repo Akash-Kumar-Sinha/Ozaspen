@@ -1,7 +1,7 @@
 "use client";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { BACKEND_DOMAIN } from "../app/lib/constant";
+import { BACKEND_AUTH_DOMAIN } from "../app/lib/constant";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +27,7 @@ const UserProfile = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const { data } = await axios.get(`${BACKEND_DOMAIN}/me`, {
+        const { data } = await axios.get(`${BACKEND_AUTH_DOMAIN}/me`, {
           withCredentials: true,
         });
         console.log("User profile data:", data.user);
@@ -45,7 +45,7 @@ const UserProfile = () => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        `${BACKEND_DOMAIN}/logout`,
+        `${BACKEND_AUTH_DOMAIN}/logout`,
         {},
         {
           withCredentials: true,

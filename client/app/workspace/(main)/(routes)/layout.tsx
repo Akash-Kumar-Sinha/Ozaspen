@@ -1,6 +1,6 @@
 "use client";
 
-import { BACKEND_DOMAIN } from "@/app/lib/constant";
+import { BACKEND_AUTH_DOMAIN } from "@/app/lib/constant";
 import axios from "axios";
 import { redirect } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
@@ -11,7 +11,7 @@ const AuthLayout = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data } = await axios.get(`${BACKEND_DOMAIN}/auth/session`, {
+        const { data } = await axios.get(`${BACKEND_AUTH_DOMAIN}/auth/session`, {
           withCredentials: true,
         });
         console.log("Authentication status:", data);

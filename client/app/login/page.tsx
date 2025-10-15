@@ -57,7 +57,7 @@ const Login = () => {
           buttonRef.current.style.transform = "scale(1)";
         }
         window.location.href =
-          "http://localhost:8000/api/v1/oauth/google/login";
+          "http://localhost:8000/api/v1/auth/oauth/google/login";
       }, 150);
     }
   };
