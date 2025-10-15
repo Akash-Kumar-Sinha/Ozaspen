@@ -46,7 +46,7 @@ func VerifySession(accessToken string, c *gin.Context) bool {
 		if refreshErr != nil {
 			return false
 		}
-		backendDomain := os.Getenv("BACKEND_DOMAIN")
+		backendDomain := os.Getenv("BACKEND_AUTH_DOMAIN")
 
 		c.SetCookie(
 			"refresh_token", // cookie name

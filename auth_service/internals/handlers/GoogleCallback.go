@@ -67,7 +67,7 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	backendDomain := os.Getenv("BACKEND_DOMAIN")
+	backendDomain := os.Getenv("BACKEND_AUTH_DOMAIN")
 
 	if token.AccessToken != "" {
 

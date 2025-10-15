@@ -24,7 +24,7 @@ func main() {
 	}
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"}, // frontend URL
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"}, // frontend URL
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true, // crucial for HttpOnly cookies
@@ -43,8 +43,10 @@ func main() {
 	router.GET("/api/v1", func(c *gin.Context) {
 		c.Redirect(301, "/")
 	})
-
-	auth := router.Group("api/v1")
+	router.GET("/api/v1/auth", func(c *gin.Context) {
+		c.Redirect(301, "/")
+	})
+	auth := router.Group("api/v1/auth")
 	api.AuthRoutes(auth)
 
 	router.Run("0.0.0.0:" + PORT)
