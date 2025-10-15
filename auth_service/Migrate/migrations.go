@@ -12,7 +12,7 @@ func init() {
 }
 
 func main() {
-	// database.DB.Migrator().DropTable(&models.User{}, &models.Profile{})
+	database.DB.Migrator().DropTable(&models.User{}, &models.Profile{})
 	if err := database.DB.AutoMigrate(models.Profile{}); err != nil {
 		log.Printf("Error during migration of Profile: %v", err)
 		panic(err)

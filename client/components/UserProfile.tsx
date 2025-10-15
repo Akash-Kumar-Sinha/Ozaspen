@@ -11,12 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
-import { LogOut } from "lucide-react";
+import { Forward, LogOut } from "lucide-react";
 
 interface UserProfile {
   id: string;
   email: string;
   name: string;
+  username: string;
   avatar: string;
 }
 
@@ -82,7 +83,7 @@ const UserProfile = () => {
       <DropdownMenuTrigger asChild>
         <Image
           src={user.avatar}
-          alt={user.name || "User avatar"}
+          alt={user.name}
           width={48}
           height={48}
           className="rounded-full border border-border object-cover"
@@ -106,7 +107,7 @@ const UserProfile = () => {
             {user.avatar && user.avatar.trim() !== "" ? (
               <Image
                 src={user.avatar}
-                alt={user.name || "User avatar"}
+                alt={user.name}
                 width={40}
                 height={40}
                 className="rounded-full border border-border object-cover"
@@ -134,36 +135,24 @@ const UserProfile = () => {
                 {user.name || "Unknown User"}
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                {user.email || "No email"}
+                @{user.username}
               </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
+              </p>
+            </div>
+            <div>
+              <button
+                onClick={handleShareProfile}
+                className="text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
+              >
+                <Forward className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator className="bg-border" />
-
-        <DropdownMenuItem
-          onClick={handleShareProfile}
-          className="flex items-center gap-3 cursor-pointer focus:bg-accent focus:text-accent-foreground"
-        >
-          <svg
-            className="h-4 w-4 text-muted-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-            />
-          </svg>
-          <span className="text-foreground">Share Profile</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator className="bg-border" />
-
         <DropdownMenuItem
           onClick={handleLogout}
           className="flex items-center gap-3 cursor-pointer focus:bg-destructive/10 focus:text-destructive text-destructive"

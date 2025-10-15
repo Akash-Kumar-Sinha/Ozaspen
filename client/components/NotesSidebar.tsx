@@ -174,7 +174,7 @@ const NotesSidebar = () => {
         </AnimatePresence>
       </div>
 
-      <div className="fixed z-20 mb-2">
+      <div className="mt-auto w-full relative z-20 mb-2 flex justify-center">
         <UserProfile />
       </div>
     </motion.aside>

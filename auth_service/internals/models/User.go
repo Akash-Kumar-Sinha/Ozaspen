@@ -16,6 +16,7 @@ type GormModel struct {
 type Profile struct {
 	GormModel
 	Email      string `gorm:"unique;uniqueIndex;not null"`
+	Username   string `gorm:"unique;uniqueIndex;not null"`
 	FirstName  string `gorm:"not null"`
 	MiddleName string
 	LastName   string

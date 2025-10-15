@@ -7,8 +7,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -125,6 +127,12 @@ func findOrCreateUser(userInfo *helpers.GoogleUserInfo, token *oauth2.Token) (*m
 		profileExists := tx.Where("email = ?", userInfo.Email).First(&profile).Error == nil
 
 		if !profileExists {
+
+			addr, err := mail.ParseAddress(userInfo.Email)
+			if err != nil {
+				// invalid email
+			}
+			username := strings.SplitN(addr.Address, "@", 2)[0]
 			firstName, middleName, lastName := helpers.SplitName(userInfo.Name)
 
 			middleNameStr := ""
@@ -136,6 +144,7 @@ func findOrCreateUser(userInfo *helpers.GoogleUserInfo, token *oauth2.Token) (*m
 				Email:      userInfo.Email,
 				FirstName:  firstName,
 				MiddleName: middleNameStr,
+				Username:   username,
 				LastName:   lastName,
 				Avatar:     userInfo.Picture,
 			}

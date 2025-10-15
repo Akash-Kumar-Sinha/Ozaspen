@@ -26,10 +26,11 @@ func GetCurrentUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"user": gin.H{
-			"id":     profile.ID,
-			"email":  profile.Email,
-			"name":   profile.FirstName + " " + profile.LastName,
-			"avatar": profile.Avatar,
+			"id":       profile.ID,
+			"email":    profile.Email,
+			"name":     profile.FirstName + " " + profile.LastName,
+			"username": profile.Username,
+			"avatar":   profile.Avatar,
 		},
 	})
 }
@@ -73,8 +74,6 @@ func Logout(c *gin.Context) {
 		false,
 		true,
 	)
-
-	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 
 	revokeURL := "https://oauth2.googleapis.com/revoke?token=" + accessToken
 	resp, err := http.Post(revokeURL, "application/x-www-form-urlencoded", nil)

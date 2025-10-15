@@ -213,7 +213,7 @@ const StickyNotes = ({
         <div className="flex items-center gap-1">
           <button
             onClick={toggleMaximize}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
+            className="text-background hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
             aria-label={isMaximized ? "Minimize note" : "Maximize note"}
           >
             {isMaximized ? (
@@ -222,7 +222,7 @@ const StickyNotes = ({
               <Maximize2 className="w-4 h-4" />
             )}
           </button>
-          <button className="text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200">
+          <button className="text-background hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200">
             <Forward className="w-4 h-4" />
           </button>
 
@@ -230,7 +230,7 @@ const StickyNotes = ({
             onClick={() => {
               dispatch(removeNote(id));
             }}
-            className="text-muted-foreground hover:text-destructive hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
+            className="text-background hover:text-destructive hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
             aria-label="Delete note"
           >
             <X className="w-4 h-4" />
