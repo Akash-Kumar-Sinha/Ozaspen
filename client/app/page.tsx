@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Zap, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import Headers from "./components/Headers";
+import Headers from "../components/Headers";
 
 export default function HeroSection() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -17,8 +17,8 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <div className="min-h-screen  text-white overflow-hidden relative">
-      <div className="absolute inset-0  bg-radial-[at_0%_50%] from-purple-800   to-black bg-gradient  "/>
+    <div className="min-h-screen text-foreground overflow-hidden relative">
+      <div className="absolute inset-0  bg-radial-[at_0%_50%] from-purple-800   to-black bg-gradient  " />
       <div className="absolute inset-0">
         <div className="absolute inset-0 opacity-30">
           {[...Array(50)].map((_, i) => (
@@ -55,14 +55,14 @@ export default function HeroSection() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <button className="group px-8 py-4 bg-blue-500 hover:bg-blue-600 rounded-xl font-semibold transition-all flex items-center justify-center">
+                <button className="group px-8 py-4 bg-primary hover:bg-primary/90 rounded-xl font-semibold transition-all flex items-center justify-center text-primary-foreground">
                   Get Started Free
                   <ArrowRight
                     size={20}
                     className="ml-2 group-hover:translate-x-1 transition-transform"
                   />
                 </button>
-                <button className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-semibold transition-all">
+                <button className="px-8 py-4 bg-card hover:bg-muted border border-border rounded-xl font-semibold transition-all text-foreground">
                   Watch Demo
                 </button>
               </div>
@@ -124,11 +124,11 @@ export default function HeroSection() {
                     </div>
 
                     <div className="flex gap-2 pt-4">
-                      <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs text-blue-400">
-                        #idea
+                      <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-full text-xs text-primary">
+                        Design
                       </span>
-                      <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-xs text-purple-400">
-                        #work
+                      <span className="px-3 py-1 bg-primary/20 border border-primary/30 rounded-full text-xs text-primary">
+                        Productivity
                       </span>
                     </div>
 

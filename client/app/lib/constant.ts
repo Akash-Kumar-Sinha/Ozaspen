@@ -1,0 +1,1 @@
+export const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN
