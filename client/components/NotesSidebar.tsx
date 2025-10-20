@@ -2,7 +2,7 @@
 
 import { Palette, Wand2, Circle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createStickyNote } from "../app/lib/features/notesSlice";
 import { useAppDispatch } from "../app/lib/hooks";
 import UserProfile from "./UserProfile";
@@ -76,6 +76,15 @@ const NotesSidebar = () => {
   const dispatch = useAppDispatch();
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
+
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const handleAddNote = (color: keyof typeof colorMap) => {
     setIsCreating(true);
@@ -92,172 +101,206 @@ const NotesSidebar = () => {
   };
 
   return (
-    <motion.aside
-      className="h-full bg-gradient-to-b from-sidebar to-sidebar/90 text-sidebar-foreground relative flex flex-col z-[9999] border-r border-border/50 flex-shrink-0 overflow-hidden backdrop-blur-xl"
-      initial={{ width: "4rem", x: -64 }}
-      animate={{
-        width: "4rem",
-        x: 0,
-        transition: {
-          type: "spring",
-          stiffness: 400,
-          damping: 30,
-        },
-      }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-12 h-12 bg-primary/5 rounded-full blur-xl"
-            style={{
-              left: `${20 + (i % 2) * 60}%`,
-              top: `${20 + i * 15}%`,
-            }}
-            animate={{
-              y: [0, -20, 0],
-              opacity: [0.2, 0.5, 0.2],
-            }}
-            transition={{
-              duration: 4 + i,
-              repeat: Infinity,
-              delay: i * 0.5,
-            }}
-          />
-        ))}
-      </div>
+    <>
+      {width >= 768 ? (
+        <motion.aside
+          className="h-full bg-gradient-to-b from-sidebar to-sidebar/90 text-sidebar-foreground relative flex flex-col z-[9999] border-r border-border/50 flex-shrink-0 overflow-hidden backdrop-blur-xl"
+          initial={{ width: "4rem", x: -64 }}
+          animate={{
+            width: "4rem",
+            x: 0,
+            transition: {
+              type: "spring",
+              stiffness: 400,
+              damping: 30,
+            },
+          }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-12 h-12 bg-primary/5 rounded-full blur-xl"
+                style={{
+                  left: `${20 + (i % 2) * 60}%`,
+                  top: `${20 + i * 15}%`,
+                }}
+                animate={{
+                  y: [0, -20, 0],
+                  opacity: [0.2, 0.5, 0.2],
+                }}
+                transition={{
+                  duration: 4 + i,
+                  repeat: Infinity,
+                  delay: i * 0.5,
+                }}
+              />
+            ))}
+          </div>
 
-      <div className="flex-1 flex flex-col relative z-10">
-        <div className="p-3">
-          <motion.div
-            className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 flex items-center justify-center gap-3 transition-all group relative overflow-hidden cursor-pointer"
-            whileHover={{
-              scale: 1.05,
-              borderColor: "rgba(147, 51, 234, 0.5)",
-            }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 opacity-0 group-hover:opacity-100"
-              transition={{ duration: 0.3 }}
-            />
+          <div className="flex-1 flex flex-col relative z-10">
+            <div className="p-3">
+              <motion.div
+                className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 flex items-center justify-center gap-3 transition-all group relative overflow-hidden cursor-pointer"
+                whileHover={{
+                  scale: 1.05,
+                  borderColor: "rgba(147, 51, 234, 0.5)",
+                }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 opacity-0 group-hover:opacity-100"
+                  transition={{ duration: 0.3 }}
+                />
+
+                <AnimatePresence>
+                  {showColorPalette && (
+                    <motion.div
+                      initial={{ scale: 0, rotate: -90 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0, rotate: 90 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                      className="absolute left-2"
+                    >
+                      <Wand2 className="w-4 h-4 text-purple-400" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ scale: 0, x: 10 }}
+                    animate={{ scale: 1, x: 0 }}
+                    exit={{ scale: 0, x: -10 }}
+                    transition={{ type: "spring", stiffness: 400, delay: 0.1 }}
+                    className="absolute right-2"
+                  >
+                    <Palette className="w-4 h-4 text-blue-400" />
+                  </motion.div>
+                </AnimatePresence>
+
+                {isCreating && (
+                  <>
+                    {[...Array(8)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute"
+                        style={{
+                          left: "50%",
+                          top: "50%",
+                        }}
+                        initial={{ scale: 0, x: 0, y: 0 }}
+                        animate={{
+                          scale: [0, 1, 0],
+                          x: Math.cos((i * 45 * Math.PI) / 180) * 30,
+                          y: Math.sin((i * 45 * Math.PI) / 180) * 30,
+                        }}
+                        transition={{ duration: 0.8, delay: i * 0.1 }}
+                      >
+                        <Circle
+                          className="w-1 h-1 text-yellow-400"
+                          fill="currentColor"
+                        />
+                      </motion.div>
+                    ))}
+                  </>
+                )}
+              </motion.div>
+            </div>
 
             <AnimatePresence>
               {showColorPalette && (
                 <motion.div
-                  initial={{ scale: 0, rotate: -90 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  exit={{ scale: 0, rotate: 90 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                  className="absolute left-2"
+                  initial={{ opacity: 0, height: 0, scale: 0.8 }}
+                  animate={{
+                    opacity: 1,
+                    height: "auto",
+                    scale: 1,
+                    transition: {
+                      height: { type: "spring", stiffness: 400, damping: 30 },
+                      opacity: { delay: 0.1 },
+                      scale: { type: "spring", stiffness: 400, delay: 0.2 },
+                    },
+                  }}
+                  exit={{
+                    opacity: 0,
+                    height: 0,
+                    scale: 0.8,
+                    transition: {
+                      height: { type: "spring", stiffness: 400, damping: 30 },
+                      opacity: { duration: 0.1 },
+                      scale: { duration: 0.2 },
+                    },
+                  }}
+                  className="px-3 pb-3 overflow-hidden"
                 >
-                  <Wand2 className="w-4 h-4 text-purple-400" />
+                  <motion.div
+                    className="bg-muted/20 rounded-2xl p-4 border border-border/30 backdrop-blur-sm"
+                    initial={{ y: 20 }}
+                    animate={{ y: 0 }}
+                    transition={{ type: "spring", stiffness: 400, delay: 0.3 }}
+                  >
+                    <div className="grid gap-3 grid-cols-1 justify-items-center">
+                      {Object.keys(colorMap).map((color, index) => (
+                        <ColorSwatch
+                          key={color}
+                          color={color as keyof typeof colorMap}
+                          onClick={() =>
+                            handleAddNote(color as keyof typeof colorMap)
+                          }
+                          index={index}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
 
-            <AnimatePresence>
-              <motion.div
-                initial={{ scale: 0, x: 10 }}
-                animate={{ scale: 1, x: 0 }}
-                exit={{ scale: 0, x: -10 }}
-                transition={{ type: "spring", stiffness: 400, delay: 0.1 }}
-                className="absolute right-2"
-              >
-                <Palette className="w-4 h-4 text-blue-400" />
-              </motion.div>
-            </AnimatePresence>
-
-            {isCreating && (
-              <>
-                {[...Array(8)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute"
-                    style={{
-                      left: "50%",
-                      top: "50%",
-                    }}
-                    initial={{ scale: 0, x: 0, y: 0 }}
-                    animate={{
-                      scale: [0, 1, 0],
-                      x: Math.cos((i * 45 * Math.PI) / 180) * 30,
-                      y: Math.sin((i * 45 * Math.PI) / 180) * 30,
-                    }}
-                    transition={{ duration: 0.8, delay: i * 0.1 }}
-                  >
-                    <Circle
-                      className="w-1 h-1 text-yellow-400"
-                      fill="currentColor"
-                    />
-                  </motion.div>
-                ))}
-              </>
-            )}
+          <motion.div
+            className="p-3 border-t border-border/30 relative z-10"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <UserProfile />
           </motion.div>
-        </div>
-
-        <AnimatePresence>
-          {showColorPalette && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, scale: 0.8 }}
-              animate={{
-                opacity: 1,
-                height: "auto",
-                scale: 1,
-                transition: {
-                  height: { type: "spring", stiffness: 400, damping: 30 },
-                  opacity: { delay: 0.1 },
-                  scale: { type: "spring", stiffness: 400, delay: 0.2 },
-                },
-              }}
-              exit={{
-                opacity: 0,
-                height: 0,
-                scale: 0.8,
-                transition: {
-                  height: { type: "spring", stiffness: 400, damping: 30 },
-                  opacity: { duration: 0.1 },
-                  scale: { duration: 0.2 },
-                },
-              }}
-              className="px-3 pb-3 overflow-hidden"
+        </motion.aside>
+      ) : (
+        <div className="fixed bottom-4 left-4 right-4 z-[9999]">
+          <div className="bg-sidebar/95 backdrop-blur-md border border-border/30 rounded-2xl px-3 py-2 flex items-center gap-3">
+            <button
+              onClick={() => setShowColorPalette((s) => !s)}
+              className="p-2 bg-primary/10 rounded-lg"
+              aria-label="Toggle colors"
             >
-              <motion.div
-                className="bg-muted/20 rounded-2xl p-4 border border-border/30 backdrop-blur-sm"
-                initial={{ y: 20 }}
-                animate={{ y: 0 }}
-                transition={{ type: "spring", stiffness: 400, delay: 0.3 }}
-              >
-                <div className="grid gap-3 grid-cols-1 justify-items-center">
-                  {Object.keys(colorMap).map((color, index) => (
+              <Palette className="w-5 h-5 text-primary" />
+            </button>
+
+            <div className="flex-1 overflow-x-auto">
+              <div className="flex gap-3 items-center">
+                {Object.keys(colorMap).map((color, index) => (
+                  <div key={color} className="shrink-0">
                     <ColorSwatch
-                      key={color}
                       color={color as keyof typeof colorMap}
                       onClick={() =>
                         handleAddNote(color as keyof typeof colorMap)
                       }
                       index={index}
                     />
-                  ))}
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-      <motion.div
-        className="p-3 border-t border-border/30 relative z-10"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <UserProfile />
-      </motion.div>
-    </motion.aside>
+            {/* Removed explicit Create button: tapping a color creates a note immediately */}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

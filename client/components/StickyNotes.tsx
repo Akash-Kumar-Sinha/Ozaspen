@@ -32,11 +32,49 @@ const StickyNotes = memo(
     const [originalSize, setOriginalSize] = useState({ width, height });
     const dragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 });
     const resizeStart = useRef({ x: 0, y: 0, startWidth: 0, startHeight: 0 });
+    const sizeRef = useRef({ width: size.width, height: size.height });
 
     useEffect(() => {
       setPosition({ x, y });
       setSize({ width, height });
     }, [x, y, width, height, zIndex, ID]);
+
+    useEffect(() => {
+      sizeRef.current = { width: size.width, height: size.height };
+    }, [size.width, size.height]);
+
+    useEffect(() => {
+      const clampToViewport = () => {
+        const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
+        const padding = 12;
+        const maxAllowedWidth = Math.max(160, vw - padding * 2);
+
+        setSize((s) => {
+          const newW = Math.min(s.width, maxAllowedWidth);
+          if (noteRef.current) {
+            gsap.set(noteRef.current, { width: `${newW}px`, ease: "none" });
+          }
+          sizeRef.current.width = newW;
+          return { ...s, width: newW };
+        });
+
+        setPosition((p) => {
+          const currentW = noteRef.current
+            ? noteRef.current.offsetWidth
+            : sizeRef.current.width;
+          const maxX = Math.max(0, vw - currentW - padding);
+          const newX = Math.min(p.x, maxX);
+          if (noteRef.current) {
+            gsap.set(noteRef.current, { left: `${newX}px`, ease: "none" });
+          }
+          return { ...p, x: newX };
+        });
+      };
+
+      clampToViewport();
+      window.addEventListener("resize", clampToViewport);
+      return () => window.removeEventListener("resize", clampToViewport);
+    }, [ID]);
 
     useEffect(() => {
       if (noteRef.current) {

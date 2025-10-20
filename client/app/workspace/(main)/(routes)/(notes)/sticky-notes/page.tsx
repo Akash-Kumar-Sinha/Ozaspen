@@ -13,7 +13,6 @@ const Notes = () => {
   const hasFetched = useRef(false);
 
   useEffect(() => {
-    // Only fetch if we don't have notes already and haven't fetched before
     if (!hasFetched.current && notes.length === 0 && !isLoading) {
       hasFetched.current = true;
       dispatch(fetchStickyNotes());
@@ -46,6 +45,7 @@ const Notes = () => {
             height: "200vh",
           }}
         >
+          {/* asfd */}
           <AnimatePresence mode="wait">
             {notes.map((note: NotesState) => (
               <StickyNotes key={note.ID} {...note} />
