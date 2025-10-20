@@ -121,32 +121,60 @@ const StickyNotes = memo(
 
     useEffect(() => {
       const handleMouseMove = (e: MouseEvent) => {
-        if (isDragging) {
+        if (isDragging && !isMaximized) {
           const deltaX = e.clientX - dragStart.current.x;
           const deltaY = e.clientY - dragStart.current.y;
-          const newX = Math.max(0, dragStart.current.startX + deltaX);
-          const newY = Math.max(0, dragStart.current.startY + deltaY);
+          const newX = Math.max(
+            0,
+            Math.min(
+              window.innerWidth - size.width,
+              dragStart.current.startX + deltaX
+            )
+          );
+          const newY = Math.max(
+            0,
+            Math.min(
+              window.innerHeight - size.height,
+              dragStart.current.startY + deltaY
+            )
+          );
+
           setPosition({ x: newX, y: newY });
 
           if (noteRef.current) {
-            gsap.set(noteRef.current, { left: newX, top: newY });
+            gsap.set(noteRef.current, {
+              left: `${newX}px`,
+              top: `${newY}px`,
+              ease: "none",
+            });
           }
         }
-        if (isResizing) {
+        if (isResizing && !isMaximized) {
           const deltaX = e.clientX - resizeStart.current.x;
           const deltaY = e.clientY - resizeStart.current.y;
           const newWidth = Math.max(
             250,
-            resizeStart.current.startWidth + deltaX
+            Math.min(
+              window.innerWidth - position.x,
+              resizeStart.current.startWidth + deltaX
+            )
           );
           const newHeight = Math.max(
             280,
-            resizeStart.current.startHeight + deltaY
+            Math.min(
+              window.innerHeight - position.y,
+              resizeStart.current.startHeight + deltaY
+            )
           );
+
           setSize({ width: newWidth, height: newHeight });
 
           if (noteRef.current) {
-            gsap.set(noteRef.current, { width: newWidth, height: newHeight });
+            gsap.set(noteRef.current, {
+              width: `${newWidth}px`,
+              height: `${newHeight}px`,
+              ease: "none",
+            });
           }
         }
       };
@@ -172,7 +200,7 @@ const StickyNotes = memo(
           document.removeEventListener("mouseup", handleMouseUp);
         };
       }
-    }, [isDragging, isResizing, position, size, ID, dispatch]);
+    }, [isDragging, isResizing, position, size, ID, dispatch, isMaximized]);
 
     const handleResizeMouseDown = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -186,6 +214,8 @@ const StickyNotes = memo(
     };
 
     const toggleMaximize = (e: React.MouseEvent) => {
+      e.stopPropagation();
+
       if (!isMaximized) {
         setOriginalPosition({ x: position.x, y: position.y });
         setOriginalSize({ width: size.width, height: size.height });
@@ -195,23 +225,29 @@ const StickyNotes = memo(
         const windowHeight =
           typeof window !== "undefined" ? window.innerHeight : 800;
 
-        const maxWidth = 1152;
+        const maxWidth = Math.min(1152, windowWidth * 0.9);
         const maxHeight = windowHeight * 0.9;
 
-        const centerX = windowWidth / 2 - maxWidth / 2;
-        const centerY = windowHeight / 2 - maxHeight / 2;
-
         if (noteRef.current) {
-          gsap.set(noteRef.current, { position: "fixed", zIndex: 9999 });
-
           gsap.to(noteRef.current, {
-            left: centerX,
-            top: centerY,
-            width: maxWidth,
-            height: maxHeight,
-            duration: 0.5,
-            ease: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            left: `${(windowWidth - maxWidth) / 2}px`,
+            top: `${(windowHeight - maxHeight) / 2}px`,
+            width: `${maxWidth}px`,
+            height: `${maxHeight}px`,
+            duration: 0.6,
+            ease: "power3.out",
+            onStart: () => {
+              gsap.set(noteRef.current, {
+                position: "fixed",
+                zIndex: 9999,
+                transform: "none",
+              });
+            },
             onComplete: () => {
+              setPosition({
+                x: (windowWidth - maxWidth) / 2,
+                y: (windowHeight - maxHeight) / 2,
+              });
               setSize({ width: maxWidth, height: maxHeight });
               setIsMaximized(true);
             },
@@ -219,21 +255,13 @@ const StickyNotes = memo(
         }
       } else {
         if (noteRef.current) {
-          gsap.set(noteRef.current, {
-            transform: "none",
-            left: "50%",
-            top: "50%",
-            marginLeft: -size.width / 2,
-            marginTop: -size.height / 2,
-          });
-
           gsap.to(noteRef.current, {
-            width: originalSize.width,
-            height: originalSize.height,
-            marginLeft: -originalSize.width / 2,
-            marginTop: -originalSize.height / 2,
-            duration: 0.35,
-            ease: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            left: `${originalPosition.x}px`,
+            top: `${originalPosition.y}px`,
+            width: `${originalSize.width}px`,
+            height: `${originalSize.height}px`,
+            duration: 0.6,
+            ease: "power3.out",
             onComplete: () => {
               setPosition(originalPosition);
               setSize(originalSize);
@@ -241,18 +269,15 @@ const StickyNotes = memo(
 
               gsap.set(noteRef.current, {
                 position: "absolute",
-                left: "auto",
-                top: "auto",
-                marginLeft: 0,
-                marginTop: 0,
-                zIndex: "auto",
-                clearProps: "left,top,zIndex",
+                zIndex: zIndex,
+                transform: "none",
               });
             },
           });
         }
       }
-      handleBringForward(e);
+
+      dispatch(bringNoteForward({ ID }));
     };
 
     const handleBringForward = (e: React.MouseEvent) => {
@@ -261,16 +286,11 @@ const StickyNotes = memo(
 
       if (noteRef.current) {
         gsap.to(noteRef.current, {
-          scale: isMaximized ? 1.65 : 1.05,
-          duration: 0.2,
-          ease: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-          onComplete: () => {
-            gsap.to(noteRef.current, {
-              scale: isMaximized ? 1.5 : 1,
-              duration: 0.2,
-              ease: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-            });
-          },
+          scale: 1.03,
+          duration: 0.15,
+          ease: "back.out(1.7)",
+          yoyo: true,
+          repeat: 1,
         });
       }
     };
@@ -295,12 +315,12 @@ const StickyNotes = memo(
         )}
         style={{
           backgroundColor: colorMap[color as keyof typeof colorMap],
-          left: isMaximized ? "50%" : `${position.x}px`,
-          top: isMaximized ? "50%" : `${position.y}px`,
+          left: `${position.x}px`,
+          top: `${position.y}px`,
           width: `${size.width}px`,
           height: `${size.height}px`,
           zIndex: isMaximized ? 9999 : zIndex,
-          transform: isMaximized ? "translate(-50%, -50%)" : undefined,
+          transform: "none",
         }}
         title="Drag to move, resize from bottom-right corner, use forward button to bring to front"
       >

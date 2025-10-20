@@ -1,36 +1,23 @@
-import { Sparkles } from "lucide-react";
-import Link from "next/link";
 import JoinButton from "./JoinButton";
+import { useRouter } from "next/navigation";
 
 const Headers = () => {
+  const router = useRouter();
+
   return (
-    <nav className="relative z-50 border-b border-border/20">
-      <div className="max-w-7xl mx-auto px-4 ">
-        <div className="flex justify-between items-center h-20">
-          <div className="flex items-center md:gap-20">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center ">
-                <Sparkles size={20} className="text-foreground " />
-              </div>
-              <span className="hidden md:block text-2xl font-bold tracking-tight">
+    <nav className="relative z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 sm:h-20">
+          <div className="flex items-center">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                 Ozaspen
               </span>
             </div>
-            <ul className="flex gap-4 md:gap-20 ml-10 text-muted-foreground">
-              <li>Solutions</li>
-              <li>Blog</li>
-              <li>About</li>
-            </ul>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/login"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Log in
-            </Link>
-            <JoinButton label="Join now" onClick={() => {}} />
+          <div className="flex items-center space-x-4">
+            <JoinButton label="Log in" onClick={() => router.push("/login")} />
           </div>
         </div>
       </div>

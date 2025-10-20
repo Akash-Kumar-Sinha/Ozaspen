@@ -2,6 +2,7 @@
 
 import { BACKEND_AUTH_DOMAIN } from "@/app/lib/constant";
 import AuthLoading from "@/components/Shared/AuthLoading";
+import AuthRequired from "@/components/Shared/AuthRequired";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
@@ -57,21 +58,8 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Authentication Required
-          </h1>
-          <p className="text-muted-foreground">
-            Please log in to access your workspace
-          </p>
-          <button
-            className="px-6 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
-            onClick={() => router.push("/login")}
-          >
-            Go to Login
-          </button>
-        </div>
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <AuthRequired />
       </div>
     );
   }

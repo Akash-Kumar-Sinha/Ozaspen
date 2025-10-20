@@ -5,7 +5,7 @@ import { fetchStickyNotes, NotesState } from "@/app/lib/features/notesSlice";
 import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useRef } from "react";
-import LoadingStickyNotes from "@/components/Loading/LoadingStickyNotes";
+import LoadingStickyNotes from "@/components/Shared/LoadingStickyNotes";
 
 const Notes = () => {
   const { notes, isLoading, error } = useAppSelector((state) => state.notes);
@@ -13,11 +13,12 @@ const Notes = () => {
   const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (!hasFetched.current) {
+    // Only fetch if we don't have notes already and haven't fetched before
+    if (!hasFetched.current && notes.length === 0 && !isLoading) {
       hasFetched.current = true;
       dispatch(fetchStickyNotes());
     }
-  }, [dispatch]);
+  }, [dispatch, notes.length, isLoading]);
 
   if (isLoading) {
     return (

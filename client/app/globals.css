@@ -46,20 +46,41 @@
 @keyframes twinkle {
   0%,
   100% {
-    opacity: 0.2;
+    opacity: 0.3;
+    transform: scale(1);
   }
   50% {
     opacity: 1;
+    transform: scale(1.2);
   }
 }
+
 @keyframes float {
   0%,
   100% {
-    transform: translateY(0px);
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+}
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
   }
   50% {
-    transform: translateY(-15px);
+    background-position: 100% 50%;
   }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
 }
 
 /* Custom Scrollbar Styles */
