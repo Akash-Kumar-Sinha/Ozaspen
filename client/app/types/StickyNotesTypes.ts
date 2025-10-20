@@ -1,7 +1,7 @@
 import { Profile } from "./Profile";
 import { GormModel } from "./types";
 
-export interface StickyNote extends GormModel {
+export interface StickyNoteTypes extends GormModel {
     Owner: Profile;
     NoteColors: string;
 }
