@@ -45,9 +45,9 @@ const Notes = () => {
             height: "200vh",
           }}
         >
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {notes.map((note: NotesState) => (
-              <StickyNotes key={note.id} {...note} />
+              <StickyNotes key={note.ID} {...note} />
             ))}
           </AnimatePresence>
         </div>

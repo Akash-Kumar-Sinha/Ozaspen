@@ -74,7 +74,7 @@ func GoogleCallback(c *gin.Context) {
 		c.SetCookie(
 			"access_token",
 			token.AccessToken,
-			3600,
+			24*3600,
 			"/",
 			backendDomain,
 			false,

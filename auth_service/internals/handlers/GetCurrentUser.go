@@ -22,16 +22,11 @@ func GetCurrentUser(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found or token invalid"})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"user": gin.H{
-			"id":       profile.ID,
-			"email":    profile.Email,
-			"name":     profile.FirstName + " " + profile.LastName,
-			"username": profile.Username,
-			"avatar":   profile.Avatar,
+	c.JSON(
+		http.StatusOK, gin.H{
+			"profile": profile,
 		},
-	})
+	)
 }
 
 func Logout(c *gin.Context) {

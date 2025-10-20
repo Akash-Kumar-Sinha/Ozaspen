@@ -3,8 +3,7 @@ import { BACKEND_STICKYNOTES_DOMAIN } from "../constant";
 import axios from "axios";
 import { GormModel } from "@/app/types/types";
 
-export interface NotesState {
-  id: string;
+export interface NotesState extends GormModel {
   color: string;
   x: number;
   y: number;
@@ -68,18 +67,20 @@ const fetchNotes = async () => {
     );
 
     const sortedNotes = (data.sticky_notes || []).reverse();
+    console.log("Fetched sticky notes:", sortedNotes);
 
     const transformedNotes = sortedNotes.map(
       (backendNote: BackendStickyNote, index: number) => {
         const position = calculateGridPosition(index);
         return {
-          id: backendNote.ID,
+          ID: backendNote.ID,
           color: backendNote.NoteColors,
           x: position.x,
           y: position.y,
           width: 360,
           height: 420,
           zIndex: 1000 + index,
+          CreatedAt: backendNote.CreatedAt,
         };
       }
     );
@@ -117,7 +118,7 @@ export const createStickyNote = createAsyncThunk(
         const position = calculateGridPosition(0);
 
         return {
-          id: data.sticky_note?.ID || Date.now().toString(),
+          ID: data.sticky_note?.ID || Date.now().toString(),
           color: noteData.color,
           x: position.x,
           y: position.y,
@@ -175,24 +176,24 @@ export const notesSlice = createSlice({
       });
     },
     updateNotePosition: (state, action) => {
-      const { id, x, y } = action.payload;
-      const note = state.notes.find((note) => note.id === id);
+      const { ID, x, y } = action.payload;
+      const note = state.notes.find((note) => note.ID === ID);
       if (note) {
         note.x = x;
         note.y = y;
       }
     },
     updateNoteSize: (state, action) => {
-      const { id, width, height } = action.payload;
-      const note = state.notes.find((note) => note.id === id);
+      const { ID, width, height } = action.payload;
+      const note = state.notes.find((note) => note.ID === ID);
       if (note) {
         note.width = width;
         note.height = height;
       }
     },
     bringNoteForward: (state, action) => {
-      const { id } = action.payload;
-      const note = state.notes.find((note) => note.id === id);
+      const { ID } = action.payload;
+      const note = state.notes.find((note) => note.ID === ID);
       if (note) {
         const maxZIndex = Math.max(...state.notes.map((n) => n.zIndex));
         note.zIndex = maxZIndex + 1;
@@ -229,7 +230,7 @@ export const notesSlice = createSlice({
       })
       .addCase(deleteStickyNote.pending, (state, action) => {
         const noteId = action.meta.arg;
-        state.notes = state.notes.filter((note) => note.id !== noteId);
+        state.notes = state.notes.filter((note) => note.ID !== noteId);
         state.notes.forEach((note, index) => {
           const position = calculateGridPosition(index);
           note.x = position.x;

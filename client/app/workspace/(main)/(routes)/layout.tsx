@@ -1,29 +1,45 @@
 "use client";
 
 import { BACKEND_AUTH_DOMAIN } from "@/app/lib/constant";
+import AuthLoading from "@/components/Loading/AuthLoading";
 import axios from "axios";
 import { redirect } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 
 const AuthLayout = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data } = await axios.get(`${BACKEND_AUTH_DOMAIN}/auth/session`, {
-          withCredentials: true,
-        });
+        setIsLoading(true);
+        const { data } = await axios.get(
+          `${BACKEND_AUTH_DOMAIN}/auth/session`,
+          {
+            withCredentials: true,
+          }
+        );
         console.log("Authentication status:", data);
 
         setIsAuthenticated(data.authenticated);
       } catch (error) {
         console.error("Error checking authentication:", error);
         setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
     };
     checkAuth();
   }, []);
+
+  if (!isLoading) {
+    return (
+      <div className="h-screen w-sscreen flex items-center justify-center">
+        <AuthLoading />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
