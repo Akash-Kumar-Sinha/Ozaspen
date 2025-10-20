@@ -49,23 +49,23 @@ func VerifySession(accessToken string, c *gin.Context) bool {
 		backendDomain := os.Getenv("BACKEND_AUTH_DOMAIN")
 
 		c.SetCookie(
-			"refresh_token", // cookie name
-			newRefreshToken, // cookie value
-			7*24*3600,       // max age in seconds (1 week)
-			"/",             // path
-			backendDomain,   // domain
-			false,           // secure: false on localhost
-			true,            // httpOnly: true
+			"refresh_token",
+			newRefreshToken,
+			7*24*3600,
+			"/",
+			backendDomain,
+			false,
+			true,
 		)
 
 		c.SetCookie(
-			"access_token", // cookie name
-			newAccessToken, // cookie value
-			expiresIn,      // max age in seconds (1 hour)
-			"/",            // path
-			backendDomain,  // domain
-			false,          // secure: false on localhost
-			true,           // httpOnly: true
+			"access_token",
+			newAccessToken,
+			expiresIn,
+			"/",
+			backendDomain,
+			false,
+			true,
 		)
 
 		accessToken = newAccessToken

@@ -38,6 +38,6 @@ func SessionHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"authenticated": valid})
+	c.JSON(http.StatusOK, gin.H{"authenticated": valid, "profileID": profile.ID})
 
 }

@@ -1,18 +1,15 @@
 package api
 
 import (
+	"sticky_notes_service/internals/handlers"
 	"sticky_notes_service/internals/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
 func StickyNotesRoutes(router *gin.RouterGroup) {
-	router.GET("/check", middlewares.Auth(), check)
+	router.POST("/create_new_sticky_note", middlewares.Auth(), handlers.CreateNewStickyNote)
+	router.GET("/get_sticky_notes", middlewares.Auth(), handlers.GetStickyNotes)
+	router.DELETE("/delete_sticky_note/:id", middlewares.Auth(), handlers.DeleteStickyNote)
 
-}
-
-func check(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "Sticky Notes Check Service is running",
-	})
 }

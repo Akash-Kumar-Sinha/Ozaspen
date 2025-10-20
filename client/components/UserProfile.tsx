@@ -58,7 +58,6 @@ const UserProfile = () => {
   };
 
   const handleShareProfile = () => {
-    // UI placeholder for share functionality
     console.log("Share profile clicked");
   };
 

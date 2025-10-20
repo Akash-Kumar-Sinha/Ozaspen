@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sticky_notes_service/communication"
 
@@ -9,13 +10,22 @@ import (
 )
 
 type AuthResponse struct {
-	Authenticated bool `json:"authenticated"`
+	Authenticated bool   `json:"authenticated"`
+	ProfileID     string `json:"profileID"`
 }
 
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		path := "/auth/session"
+
+		accessToken, err := c.Cookie("access_token")
+		if err != nil || accessToken == "" {
+			fmt.Printf("not present")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "No access token provided"})
+			c.Abort()
+			return
+		}
 
 		body, resp, readErr := communication.AuthCommunication(c, path)
 
@@ -43,6 +53,8 @@ func Auth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		c.Set("profileID", response.ProfileID)
 
 		c.Next()
 	}

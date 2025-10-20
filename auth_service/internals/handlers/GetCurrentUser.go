@@ -4,7 +4,6 @@ import (
 	"auth_service/internals/database"
 	"auth_service/internals/models"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -54,26 +53,12 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	backendDomain := os.Getenv("BACKEND_AUTH_DOMAIN")
-	c.SetCookie(
-		"access_token",
-		"",
-		-1,
-		"/",
-		backendDomain,
-		false,
-		true,
-	)
+	clearCookiesFromLocalhost := func(name string) {
+		c.SetCookie(name, "", -1, "/", "localhost", false, true)
+	}
 
-	c.SetCookie(
-		"refresh_token",
-		"",
-		-1,
-		"/",
-		backendDomain,
-		false,
-		true,
-	)
+	clearCookiesFromLocalhost("access_token")
+	clearCookiesFromLocalhost("refresh_token")
 
 	revokeURL := "https://oauth2.googleapis.com/revoke?token=" + accessToken
 	resp, err := http.Post(revokeURL, "application/x-www-form-urlencoded", nil)

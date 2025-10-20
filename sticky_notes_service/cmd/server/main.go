@@ -24,37 +24,16 @@ func main() {
 	}
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"}, 
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS", "DELETE", "PUT"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true, 
+		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Sticky Notes Service is running",
-		})
-	})
-
-	router.GET("/debug", func(c *gin.Context) {
-		authDomain := os.Getenv("BACKEND_AUTH_DOMAIN")
-		authUrl := ""
-		if authDomain != "" {
-			authUrl = authDomain + "/auth/session"
-		}
-
-		c.JSON(200, gin.H{
-			"message":            "Debug Information",
-			"service":            "sticky-notes-service",
-			"auth_domain":        authDomain,
-			"auth_url":           authUrl,
-			"auth_domain_is_set": authDomain != "",
-			"port":               port,
-			"environment_variables": map[string]string{
-				"BACKEND_AUTH_DOMAIN": authDomain,
-				"PORT":                os.Getenv("PORT"),
-			},
 		})
 	})
 

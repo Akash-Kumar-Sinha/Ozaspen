@@ -4,11 +4,9 @@ import NotesSidebar from "@/components/NotesSidebar";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
       <NotesSidebar />
-      <div className="flex-1 h-full overflow-visible custom-scrollbar">
-        {children}
-      </div>
+      <div className="flex-1 h-full overflow-hidden relative">{children}</div>
     </div>
   );
 };
