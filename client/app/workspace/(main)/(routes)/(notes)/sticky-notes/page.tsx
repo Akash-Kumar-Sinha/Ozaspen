@@ -45,7 +45,6 @@ const Notes = () => {
             height: "200vh",
           }}
         >
-          {/* asfd */}
           <AnimatePresence mode="wait">
             {notes.map((note: NotesState) => (
               <StickyNotes key={note.ID} {...note} />

@@ -7,6 +7,11 @@ import WorkspaceCard from "../../components/WorkspaceCard";
 
 const workspaceFeatures = [
   {
+    title: "Sticky Notes",
+    description: "Keep your important notes always visible.",
+    routes: "/workspace/sticky-notes",
+  },
+  {
     title: "Notes",
     description: "Create and manage your notes efficiently.",
     routes: "/workspace/notes",
@@ -20,11 +25,6 @@ const workspaceFeatures = [
     title: "Docs",
     description: "Collaborate on documents in real-time.",
     routes: "/workspace/docs",
-  },
-  {
-    title: "Sticky Notes",
-    description: "Keep your important notes always visible.",
-    routes: "/workspace/sticky-notes",
   },
   {
     title: "Canvas",

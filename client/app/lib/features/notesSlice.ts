@@ -1,19 +1,14 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { BACKEND_STICKYNOTES_DOMAIN } from "../constant";
 import axios from "axios";
-import { GormModel } from "@/app/types/types";
+import { StickyNoteTypes } from "@/app/types/StickyNotesTypes";
 
-export interface NotesState extends GormModel {
-  color: string;
+export interface NotesState extends StickyNoteTypes {
   x: number;
   y: number;
   width: number;
   height: number;
   zIndex: number;
-}
-
-interface BackendStickyNote extends GormModel {
-  NoteColors: string;
 }
 
 interface NotesSliceState {
@@ -67,20 +62,36 @@ const fetchNotes = async () => {
     );
 
     const sortedNotes = (data.sticky_notes || []).reverse();
-    console.log("Fetched sticky notes:", sortedNotes);
-
     const transformedNotes = sortedNotes.map(
-      (backendNote: BackendStickyNote, index: number) => {
+      (backendNote: StickyNoteTypes, index: number) => {
         const position = calculateGridPosition(index);
+
         return {
           ID: backendNote.ID,
-          color: backendNote.NoteColors,
+          CreatedAt: backendNote.CreatedAt,
+          UpdatedAt: backendNote.UpdatedAt,
+          DeletedAt: backendNote.DeletedAt,
+          OwnerID: backendNote.OwnerID,
+          Owner: backendNote.Owner,
+          NoteColors: backendNote.NoteColors,
+          ContentID: backendNote.ContentID,
+          ShareLinkID: backendNote.ShareLinkID,
+          ShareLink: backendNote.ShareLink,
           x: position.x,
           y: position.y,
           width: 360,
           height: 420,
           zIndex: 1000 + index,
-          CreatedAt: backendNote.CreatedAt,
+          Content: backendNote.Content
+            ? {
+                ID: backendNote.Content.ID,
+                CreatedAt: backendNote.Content.CreatedAt,
+                UpdatedAt: backendNote.Content.UpdatedAt,
+                DeletedAt: backendNote.Content.DeletedAt,
+                Blocks: backendNote.Content.Blocks || [],
+                Changes: backendNote.Content.Changes || [],
+              }
+            : undefined,
         };
       }
     );
@@ -119,12 +130,41 @@ export const createStickyNote = createAsyncThunk(
 
         return {
           ID: data.sticky_note?.ID || Date.now().toString(),
-          color: noteData.color,
+          CreatedAt: data.sticky_note?.CreatedAt || new Date().toISOString(),
+          UpdatedAt: data.sticky_note?.UpdatedAt || new Date().toISOString(),
+          DeletedAt: data.sticky_note?.DeletedAt || null,
+          OwnerID: data.sticky_note?.OwnerID || "",
+          Owner: data.sticky_note?.Owner || {
+            ID: "",
+            CreatedAt: "",
+            UpdatedAt: "",
+            DeletedAt: null,
+            Email: "",
+            Username: "",
+            FirstName: "",
+            MiddleName: "",
+            LastName: "",
+            Avatar: "",
+          },
+          NoteColors: noteData.color,
+          ContentID: data.sticky_note?.ContentID,
+          ShareLinkID: data.sticky_note?.ShareLinkID || null,
+          ShareLink: data.sticky_note?.ShareLink || null,
           x: position.x,
           y: position.y,
           width: 360,
           height: 420,
           zIndex: 1000,
+          Content: data.sticky_note?.Content
+            ? {
+                ID: data.sticky_note.Content.ID,
+                CreatedAt: data.sticky_note.Content.CreatedAt || "",
+                UpdatedAt: data.sticky_note.Content.UpdatedAt || "",
+                DeletedAt: data.sticky_note.Content.DeletedAt || null,
+                Blocks: data.sticky_note.Content.Blocks || [],
+                Changes: data.sticky_note.Content.Changes || [],
+              }
+            : undefined,
         };
       } else {
         throw new Error(data.message || "Failed to create sticky note");

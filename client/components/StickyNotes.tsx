@@ -16,11 +16,30 @@ import { clsx } from "clsx";
 import Editor from "./Editor";
 import { colorMap } from "@/app/types/types";
 import CreationTime from "./CreationTime";
+import { Block } from "@blocknote/core";
+import { BACKEND_STICKYNOTES_DOMAIN } from "@/app/lib/constant";
+import axios from "axios";
+import Saving from "./ui/Saving";
 
 const StickyNotes = memo(
-  ({ ID, color, x, y, width, height, zIndex, CreatedAt }: NotesState) => {
+  ({
+    ID,
+    NoteColors,
+    x,
+    y,
+    width,
+    height,
+    zIndex,
+    CreatedAt,
+    Content,
+  }: NotesState) => {
     const dispatch = useAppDispatch();
-    const editor = useCreateBlockNote();
+    const editor = useCreateBlockNote({
+      initialContent:
+        Content?.Blocks && Content.Blocks.length > 0
+          ? Content.Blocks
+          : undefined,
+    });
     const noteRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
@@ -33,6 +52,8 @@ const StickyNotes = memo(
     const dragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 });
     const resizeStart = useRef({ x: 0, y: 0, startWidth: 0, startHeight: 0 });
     const sizeRef = useRef({ width: size.width, height: size.height });
+    const [blocks, setBlocks] = useState<Block[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
       setPosition({ x, y });
@@ -98,7 +119,7 @@ const StickyNotes = memo(
       colors: {
         editor: {
           text: "#18181b",
-          background: colorMap[color as keyof typeof colorMap],
+          background: colorMap[NoteColors as keyof typeof colorMap],
         },
         menu: {
           text: "#ffffff",
@@ -333,6 +354,29 @@ const StickyNotes = memo(
       }
     };
 
+    const saveBlocks = async () => {
+      try {
+        setIsSaving(true);
+        await axios.post(
+          `${BACKEND_STICKYNOTES_DOMAIN}/save_sticky_notes`,
+          {
+            sticky_note_id: ID,
+            blocks: blocks,
+          },
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error saving blocks:", error);
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
     return (
       <div
         ref={noteRef}
@@ -352,7 +396,7 @@ const StickyNotes = memo(
           }
         )}
         style={{
-          backgroundColor: colorMap[color as keyof typeof colorMap],
+          backgroundColor: colorMap[NoteColors as keyof typeof colorMap],
           left: `${position.x}px`,
           top: `${position.y}px`,
           width: `${size.width}px`,
@@ -375,6 +419,9 @@ const StickyNotes = memo(
             {CreatedAt && <CreationTime CreatedAt={CreatedAt} />}
           </div>
           <div className="flex items-center gap-1">
+            <button onClick={saveBlocks}>
+              <Saving isSaving={isSaving} />
+            </button>
             <button
               onClick={toggleMaximize}
               className="text-background hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
@@ -407,7 +454,11 @@ const StickyNotes = memo(
         </div>
 
         <div className="flex-1 min-h-0">
-          <Editor editor={editor} customTheme={customTheme} />
+          <Editor
+            editor={editor}
+            customTheme={customTheme}
+            setBlock={setBlocks}
+          />
         </div>
 
         <div

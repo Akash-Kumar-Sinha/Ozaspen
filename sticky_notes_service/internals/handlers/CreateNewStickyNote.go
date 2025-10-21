@@ -32,9 +32,20 @@ func CreateNewStickyNote(c *gin.Context) {
 		return
 	}
 
+	content := models.Content{
+		Blocks:  []byte("{}"),
+		Changes: models.ChangesList{},
+	}
+
+	if err := database.DB.Create(&content).Error; err != nil {
+		c.JSON(500, gin.H{"error": "Failed to create sticky note content"})
+		return
+	}
+
 	stickyNotes := models.StickyNote{
 		OwnerID:    profileID,
 		NoteColors: req.NoteColors,
+		ContentID:  &content.ID,
 	}
 
 	if err := database.DB.Create(&stickyNotes).Error; err != nil {

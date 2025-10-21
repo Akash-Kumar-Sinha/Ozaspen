@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type StickyNote struct {
@@ -44,18 +45,6 @@ type Collaborator struct {
 
 type Content struct {
 	authmodels.GormModel
-	Changes ChangesList `gorm:"type:jsonb;not null;default:'[]'" json:"changes"`
-
-	BlocksID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex"`
-	Blocks   Blocks    `gorm:"foreignKey:BlocksID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-}
-
-type Change struct {
-	Who  string    `json:"who"`
-	What string    `json:"what"`
-	When time.Time `json:"when"`
-}
-
-type Blocks struct {
-	authmodels.GormModel
+	Changes ChangesList    `gorm:"type:jsonb;not null;default:'[]'" json:"Changes"`
+	Blocks  datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'" json:"Blocks"`
 }

@@ -26,7 +26,9 @@ func GetStickyNotes(c *gin.Context) {
 	}
 
 	var stickyNotes []models.StickyNote
-	if err := database.DB.Where("owner_id = ?", profileID).Find(&stickyNotes).Error; err != nil {
+	if err := database.DB.
+		Preload("Content").
+		Where("owner_id = ?", profileID).Find(&stickyNotes).Error; err != nil {
 		c.JSON(500, gin.H{"error": "Failed to retrieve sticky notes"})
 		return
 	}

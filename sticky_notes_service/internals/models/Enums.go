@@ -4,7 +4,14 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 )
+
+type Change struct {
+	Who  string    `json:"who"`
+	What string    `json:"what"`
+	When time.Time `json:"when"`
+}
 
 type Role string
 type ChangesList []Change
