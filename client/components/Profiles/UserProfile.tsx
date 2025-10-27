@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { BACKEND_AUTH_DOMAIN } from "../app/lib/constant";
+import { BACKEND_AUTH_DOMAIN } from "../../app/lib/constant";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,7 +112,9 @@ const UserProfile = () => {
               className="w-10 h-10 bg-primary rounded-full border border-border flex items-center justify-center"
               style={{
                 display:
-                  profile.Avatar && profile.Avatar.trim() !== "" ? "none" : "flex",
+                  profile.Avatar && profile.Avatar.trim() !== ""
+                    ? "none"
+                    : "flex",
               }}
             >
               <span className="text-primary-foreground text-lg font-medium">

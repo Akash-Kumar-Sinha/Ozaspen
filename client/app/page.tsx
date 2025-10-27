@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
-import Headers from "../components/Headers";
+import Headers from "@/components/Home/Headers";
 
 export default function HeroSection() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });

@@ -3,7 +3,7 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useRef } from "react";
-import WorkspaceCard from "../../components/WorkspaceCard";
+import WorkspaceCard from "../../components/Home/WorkspaceCard";
 
 const workspaceFeatures = [
   {

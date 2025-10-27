@@ -37,6 +37,7 @@ export interface Collaborator extends GormModel {
 export interface StickyNoteTypes extends GormModel {
   OwnerID: string;
   Owner: Profile;
+  Title: string;
   NoteColors: string;
   ContentID?: string;
   Content?: EditorContent;

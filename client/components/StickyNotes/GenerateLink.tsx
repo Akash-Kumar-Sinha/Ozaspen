@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AdaptiveButton } from "./ui/AdaptiveButton";
+import { AdaptiveButton } from "../Button/AdaptiveButton";
 import { Forward } from "lucide-react";
 
 const GenerateLink = ({ NoteColors }: { NoteColors: string }) => {

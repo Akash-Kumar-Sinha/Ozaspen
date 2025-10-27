@@ -1,11 +1,11 @@
 "use client";
 
-import StickyNotes from "@/components/StickyNotes";
+import StickyNotes from "@/components/StickyNotes/StickyNotes";
 import { fetchStickyNotes, NotesState } from "@/app/lib/features/notesSlice";
 import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useRef } from "react";
-import LoadingStickyNotes from "@/components/Shared/LoadingStickyNotes";
+import LoadingStickyNotes from "@/components/StickyNotes/LoadingStickyNotes";
 
 const Notes = () => {
   const { notes, isLoading, error } = useAppSelector((state) => state.notes);
@@ -38,16 +38,10 @@ const Notes = () => {
   return (
     <div className="h-full w-screen overflow-auto relative">
       <div className="absolute inset-0">
-        <div
-          className="relative"
-          style={{
-            minHeight: "100vh",
-            height: "200vh",
-          }}
-        >
+        <div className="relative">
           <AnimatePresence mode="wait">
             {notes.map((note: NotesState) => (
-              <StickyNotes key={note.ID} {...note}  />
+              <StickyNotes key={note.ID} {...note} />
             ))}
           </AnimatePresence>
         </div>

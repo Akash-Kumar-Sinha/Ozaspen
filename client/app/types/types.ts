@@ -4,15 +4,15 @@ export interface GormModel {
   UpdatedAt?: string;
   DeletedAt?: string;
 }
+
 export const colorMap = {
-  yellow: "#facc15",
-  green: "#4ade80",
-  orange: "#fb923c",
-  purple: "#a855f7",
-  indigo: "#6366f1",
-  blue: "#3b82f6",
-  red: "#ef4444",
-  pink: "#ec4899",
+  yellow: "#fef08a",
+  pink: "#fbcfe8",
+  mint: "#bbf7d0",
+  lavender: "#e9d5ff",
+  sky: "#bfdbfe",
+  peach: "#fed7aa",
+  coral: "#fecaca",
   black: "#000000",
   white: "#ffffff",
 } as const;

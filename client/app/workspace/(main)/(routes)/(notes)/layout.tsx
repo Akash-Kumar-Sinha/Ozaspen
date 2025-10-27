@@ -1,6 +1,6 @@
 "use client";
 
-import NotesSidebar from "@/components/NotesSidebar";
+import NotesSidebar from "@/components/StickyNotes/NotesSidebar";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (

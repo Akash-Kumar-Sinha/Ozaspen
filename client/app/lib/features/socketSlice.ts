@@ -6,10 +6,9 @@ let globalSocket: WebSocket | null = null;
 
 export interface SocketState {
   isConnected: boolean;
-  socket: WebSocket | null;
 }
 
-const initialState: SocketState = { isConnected: false, socket: null };
+const initialState: SocketState = { isConnected: false };
 
 export const socketSlice = createSlice({
   name: "socket",
@@ -17,13 +16,11 @@ export const socketSlice = createSlice({
   reducers: {
     setConnected: (state, action: PayloadAction<boolean>) => {
       state.isConnected = action.payload;
-      state.socket = globalSocket;
     },
     disconnect: (state) => {
       globalSocket?.close();
       globalSocket = null;
       state.isConnected = false;
-      state.socket = null;
     },
   },
 });

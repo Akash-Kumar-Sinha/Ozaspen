@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { BACKEND_STICKYNOTES_DOMAIN } from "../constant";
 import axios from "axios";
 import { StickyNoteTypes } from "@/app/types/StickyNotesTypes";
+import { Title } from "@radix-ui/react-alert-dialog";
 
 export interface NotesState extends StickyNoteTypes {
   x: number;
@@ -73,6 +74,7 @@ const fetchNotes = async () => {
           DeletedAt: backendNote.DeletedAt,
           OwnerID: backendNote.OwnerID,
           Owner: backendNote.Owner,
+          Title: backendNote.Title,
           NoteColors: backendNote.NoteColors,
           ContentID: backendNote.ContentID,
           ShareLinkID: backendNote.ShareLinkID,
@@ -146,6 +148,7 @@ export const createStickyNote = createAsyncThunk(
             LastName: "",
             Avatar: "",
           },
+          Title: data.sticky_note.Title,
           NoteColors: noteData.color,
           ContentID: data.sticky_note?.ContentID,
           ShareLinkID: data.sticky_note?.ShareLinkID || null,

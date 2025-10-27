@@ -1,5 +1,5 @@
-import JoinButton from "./JoinButton";
 import { useRouter } from "next/navigation";
+import JoinButton from "../Button/JoinButton";
 
 const Headers = () => {
   const router = useRouter();

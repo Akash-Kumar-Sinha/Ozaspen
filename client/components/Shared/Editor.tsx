@@ -14,7 +14,7 @@ interface EditorProps {
     DefaultInlineContentSchema,
     DefaultStyleSchema
   >;
-  customTheme?: Theme;
+  customTheme: Theme;
   setBlock: React.Dispatch<React.SetStateAction<Block[]>>;
 }
 const Editor = ({ editor, customTheme, setBlock }: EditorProps) => {

@@ -1,12 +1,15 @@
 import React from "react";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, SaveAll } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Saving = ({
   isSaving,
   noteColor,
+  className,
 }: {
   isSaving: boolean;
   noteColor?: string;
+  className?: string;
 }) => {
   const isDarkBackground = noteColor === "black";
   const isLightBackground = noteColor === "white";
@@ -24,22 +27,16 @@ const Saving = ({
       {isSaving ? (
         <Loader2
           className={`animate-spin h-3.5 w-3.5 ${
-            isDarkBackground
-              ? "text-foreground"
-              : isLightBackground
-              ? "text-background"
-              : "text-foreground"
+            isDarkBackground ? "text-foreground" : "text-background"
           }`}
         />
       ) : (
-        <Check
-          className={`h-3.5 w-3.5 ${
-            isDarkBackground
-              ? "text-foreground"
-              : isLightBackground
-              ? "text-background"
-              : "text-foreground"
-          }`}
+        <SaveAll
+          className={cn(
+            "h-3.5 w-3.5",
+            isDarkBackground ? "text-foreground" : "text-background",
+            className
+          )}
         />
       )}
     </div>

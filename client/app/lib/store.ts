@@ -8,6 +8,13 @@ export const makeStore = () => {
       notes: notesReducer,
       socket: socketReducer,
     },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        serializableCheck: {
+          ignoredActions: ["socket/setConnected"],
+          ignoredPaths: ["socket.socket"],
+        },
+      }),
   });
 };
 
