@@ -14,6 +14,7 @@ type StickyNote struct {
 	OwnerID uuid.UUID          `gorm:"type:uuid;not null;index"`
 	Owner   authmodels.Profile `gorm:"foreignKey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
+	Title      string `gorm:"default:'Untitled Sticky Note';not null"`
 	NoteColors string `gorm:"not null"`
 
 	ContentID *uuid.UUID `gorm:"type:uuid;uniqueIndex"`

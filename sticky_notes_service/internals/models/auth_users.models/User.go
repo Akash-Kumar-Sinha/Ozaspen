@@ -8,9 +8,9 @@ import (
 
 type GormModel struct {
 	ID        uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	CreatedAt time.Time  `gorm:"type:timestamp;default:now()"`
-	UpdatedAt time.Time  `gorm:"type:timestamp;default:now()"`
-	DeletedAt *time.Time `gorm:"type:timestamp;index"`
+	CreatedAt time.Time  `gorm:"type:timestamptz;default:now()"`
+	UpdatedAt time.Time  `gorm:"type:timestamptz;default:now()"`
+	DeletedAt *time.Time `gorm:"type:timestamptz;index"`
 }
 
 type Profile struct {
