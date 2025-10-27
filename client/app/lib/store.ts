@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import notesReducer from "./features/notesSlice";
+import socketReducer from "./features/socketSlice";
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       notes: notesReducer,
+      socket: socketReducer,
     },
   });
 };

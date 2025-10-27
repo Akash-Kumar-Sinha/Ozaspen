@@ -49,9 +49,15 @@ func main() {
 		c.Redirect(301, "/")
 	})
 
+	router.GET("/api/v1/sticky-notes/connect", func(c *gin.Context) {
+		c.Redirect(301, "/")
+	})
+
 	stickynotes := router.Group("api/v1/sticky-notes")
+	websocket := router.Group("api/v1/sticky-notes/connect")
 
 	api.StickyNotesRoutes(stickynotes)
+	api.WebsocketRoutes(websocket)
 
 	router.Run(":" + port)
 }

@@ -1,8 +1,25 @@
 import React from "react";
 
-const CreationTime = ({ CreatedAt }: { CreatedAt: string }) => {
+const CreationTime = ({
+  CreatedAt,
+  noteColor,
+}: {
+  CreatedAt: string;
+  noteColor?: string;
+}) => {
+  const isDarkBackground = noteColor === "black";
+  const isLightBackground = noteColor === "white";
+
   return (
-    <span className="text-xs text-muted font-medium">
+    <span
+      className={`text-xs font-medium ${
+        isDarkBackground
+          ? "text-foreground/60"
+          : isLightBackground
+          ? "text-background/60"
+          : "text-muted"
+      }`}
+    >
       {(() => {
         const now = new Date();
         const created = new Date(CreatedAt);

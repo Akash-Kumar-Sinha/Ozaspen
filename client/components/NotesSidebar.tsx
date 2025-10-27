@@ -295,8 +295,6 @@ const NotesSidebar = () => {
                 ))}
               </div>
             </div>
-
-            {/* Removed explicit Create button: tapping a color creates a note immediately */}
           </div>
         </div>
       )}

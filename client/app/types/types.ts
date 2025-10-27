@@ -13,6 +13,8 @@ export const colorMap = {
   blue: "#3b82f6",
   red: "#ef4444",
   pink: "#ec4899",
+  black: "#000000",
+  white: "#ffffff",
 } as const;
 
 export type NoteColor = keyof typeof colorMap;

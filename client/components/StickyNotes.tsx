@@ -1,4 +1,4 @@
-import { X, GripVertical, Maximize2, Minimize2, Forward } from "lucide-react";
+import { X, GripVertical, Maximize2, Minimize2 } from "lucide-react";
 import {
   deleteStickyNote,
   NotesState,
@@ -6,11 +6,11 @@ import {
   updateNoteSize,
   bringNoteForward,
 } from "../app/lib/features/notesSlice";
-import { useAppDispatch } from "../app/lib/hooks";
+import { useAppDispatch, useAppSelector } from "../app/lib/hooks";
 import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/mantine/style.css";
 import "@blocknote/core/fonts/inter.css";
-import { useRef, useState, useEffect, memo } from "react";
+import { useRef, useState, useEffect, memo, useCallback } from "react";
 import gsap from "gsap";
 import { clsx } from "clsx";
 import Editor from "./Editor";
@@ -20,6 +20,11 @@ import { Block } from "@blocknote/core";
 import { BACKEND_STICKYNOTES_DOMAIN } from "@/app/lib/constant";
 import axios from "axios";
 import Saving from "./ui/Saving";
+import { RootState } from "@/app/lib/store";
+import { connect } from "@/app/lib/features/socketSlice";
+import { ConnectionStatus } from "./ui/ConnectionStatus";
+import { AdaptiveButton } from "./ui/AdaptiveButton";
+import GenerateLink from "./GenerateLink";
 
 const StickyNotes = memo(
   ({
@@ -34,6 +39,11 @@ const StickyNotes = memo(
     Content,
   }: NotesState) => {
     const dispatch = useAppDispatch();
+    const socket = useAppSelector((state: RootState) => state.socket.socket);
+    const isConnected = useAppSelector(
+      (state: RootState) => state.socket.isConnected
+    );
+
     const editor = useCreateBlockNote({
       initialContent:
         Content?.Blocks && Content.Blocks.length > 0
@@ -54,6 +64,9 @@ const StickyNotes = memo(
     const sizeRef = useRef({ width: size.width, height: size.height });
     const [blocks, setBlocks] = useState<Block[]>([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [isAutoSaving, setIsAutoSaving] = useState(false);
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastSavedBlocks = useRef<string>("");
 
     useEffect(() => {
       setPosition({ x, y });
@@ -63,6 +76,61 @@ const StickyNotes = memo(
     useEffect(() => {
       sizeRef.current = { width: size.width, height: size.height };
     }, [size.width, size.height]);
+
+    useEffect(() => {
+      console.log(`StickyNote ${ID}: isAutoSaving changed to:`, isAutoSaving);
+    }, [isAutoSaving, ID]);
+
+    const autoSaveBlocks = useCallback(async () => {
+      if (blocks.length === 0) return;
+      if (!isConnected || !socket) return;
+      const currentBlocksString = JSON.stringify(blocks);
+      if (currentBlocksString === lastSavedBlocks.current) return;
+
+      try {
+        setIsAutoSaving(true);
+        socket.send(
+          JSON.stringify({
+            type: "save_sticky_note",
+            data: {
+              sticky_note_id: ID,
+              blocks: blocks,
+            },
+          })
+        );
+
+        lastSavedBlocks.current = currentBlocksString;
+        setTimeout(() => {
+          setIsAutoSaving(false);
+        }, 800);
+      } catch (error) {
+        console.error("WebSocket auto-save failed:", error);
+        setIsAutoSaving(false);
+      }
+    }, [blocks, ID, isConnected, socket]);
+
+    useEffect(() => {
+      if (blocks.length === 0) return;
+      if (!isConnected || !socket) return;
+
+      const currentBlocksString = JSON.stringify(blocks);
+
+      if (currentBlocksString === lastSavedBlocks.current) return;
+
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(() => {
+        autoSaveBlocks();
+      }, 2000);
+
+      return () => {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+      };
+    }, [blocks, ID, isConnected, socket, autoSaveBlocks]);
 
     useEffect(() => {
       const clampToViewport = () => {
@@ -115,45 +183,78 @@ const StickyNotes = memo(
       }
     }, [ID]);
 
+    const backgroundColor = colorMap[NoteColors as keyof typeof colorMap];
+    const isDarkBackground = NoteColors === "black";
+    const isLightBackground = NoteColors === "white";
+
+    const getCSSVariable = (variableName: string) => {
+      if (typeof window !== "undefined") {
+        return getComputedStyle(document.documentElement)
+          .getPropertyValue(variableName)
+          .trim();
+      }
+      return "";
+    };
+
+    const foregroundColor = getCSSVariable("--foreground") || "#ffffff";
+    const backgroundColorVar = getCSSVariable("--background") || "#000000";
+    const mutedForegroundColor =
+      getCSSVariable("--muted-foreground") || "#a1a1aa";
+    const primaryColor = getCSSVariable("--primary") || "#9333ea";
+
     const customTheme = {
       colors: {
         editor: {
-          text: "#18181b",
-          background: colorMap[NoteColors as keyof typeof colorMap],
+          text: isDarkBackground
+            ? foregroundColor
+            : isLightBackground
+            ? backgroundColorVar
+            : "#000000",
+          background: backgroundColor,
         },
         menu: {
-          text: "#ffffff",
-          background: "#000000",
+          text: isDarkBackground ? backgroundColorVar : foregroundColor,
+          background: isDarkBackground ? foregroundColor : backgroundColorVar,
         },
         tooltip: {
-          text: "#ffffff",
-          background: "#000000",
+          text: isDarkBackground ? backgroundColorVar : foregroundColor,
+          background: isDarkBackground ? foregroundColor : backgroundColorVar,
         },
         hovered: {
-          text: "#ffffff",
-          background: "#9333ea",
+          text: foregroundColor,
+          background: primaryColor,
         },
         selected: {
-          text: "#ffffff",
-          background: "rgba(255, 255, 255, 0.1)",
+          text: isDarkBackground ? backgroundColorVar : "#000000",
+          background: isDarkBackground
+            ? "rgba(0, 0, 0, 0.1)"
+            : "rgba(255, 255, 255, 0.1)",
         },
         disabled: {
-          text: "#71717a",
-          background: "rgba(255, 255, 255, 0.05)",
+          text: mutedForegroundColor,
+          background: isDarkBackground
+            ? "rgba(0, 0, 0, 0.05)"
+            : "rgba(255, 255, 255, 0.05)",
         },
-        shadow: "rgba(255, 255, 255, 0.1)",
-        border: "rgba(255, 255, 255, 0.1)",
-        sideMenu: "#18181b",
+        shadow: isDarkBackground
+          ? "rgba(0, 0, 0, 0.1)"
+          : "rgba(255, 255, 255, 0.1)",
+        border: isDarkBackground
+          ? "rgba(0, 0, 0, 0.1)"
+          : "rgba(255, 255, 255, 0.1)",
+        sideMenu: isDarkBackground ? foregroundColor : backgroundColorVar,
         highlightColors: {
-          gray: { text: "#18181b", background: "#e4e4e7" },
-          brown: { text: "#18181b", background: "#d4a574" },
-          red: { text: "#18181b", background: "#fca5a5" },
-          orange: { text: "#18181b", background: "#fdba74" },
-          yellow: { text: "#18181b", background: "#fde047" },
-          green: { text: "#18181b", background: "#86efac" },
-          blue: { text: "#18181b", background: "#93c5fd" },
-          purple: { text: "#18181b", background: "#c4b5fd" },
-          pink: { text: "#18181b", background: "#f9a8d4" },
+          gray: { text: "#000000", background: "#e4e4e7" },
+          brown: { text: "#000000", background: "#d4a574" },
+          red: { text: "#000000", background: "#fca5a5" },
+          orange: { text: "#000000", background: "#fdba74" },
+          yellow: { text: "#000000", background: "#fde047" },
+          green: { text: "#000000", background: "#86efac" },
+          blue: { text: "#000000", background: "#93c5fd" },
+          purple: { text: "#000000", background: "#c4b5fd" },
+          pink: { text: "#000000", background: "#f9a8d4" },
+          black: { text: foregroundColor, background: backgroundColorVar },
+          white: { text: "#000000", background: "#f8f8f8" },
         },
       },
       borderRadius: 4,
@@ -354,9 +455,11 @@ const StickyNotes = memo(
       }
     };
 
-    const saveBlocks = async () => {
+    const saveBlocks = useCallback(async () => {
       try {
         setIsSaving(true);
+        console.log("Manual save via HTTP for StickyNote ID:", ID);
+
         await axios.post(
           `${BACKEND_STICKYNOTES_DOMAIN}/save_sticky_notes`,
           {
@@ -370,12 +473,27 @@ const StickyNotes = memo(
             },
           }
         );
+
+        lastSavedBlocks.current = JSON.stringify(blocks);
+        console.log("Manual save successful for StickyNote ID:", ID);
       } catch (error) {
-        console.error("Error saving blocks:", error);
+        console.error("Manual save failed:", error);
       } finally {
         setIsSaving(false);
       }
-    };
+    }, [blocks, ID]);
+
+    const connectSockets = useCallback(() => {
+      dispatch(connect());
+    }, [dispatch]);
+
+    useEffect(() => {
+      if (!isConnected) {
+        connectSockets();
+      }
+    }, [isConnected, connectSockets]);
+
+    console.log("Rendering StickyNote ID:", ID);
 
     return (
       <div
@@ -404,52 +522,78 @@ const StickyNotes = memo(
           zIndex: isMaximized ? 9999 : zIndex,
           transform: "none",
         }}
-        title="Drag to move, resize from bottom-right corner, use forward button to bring to front"
+        title="Drag to move, resize from bottom-right corner, tap on the top to bring to front"
       >
         <div
-          className="flex justify-between items-center px-4 py-2 flex-shrink-0 bg-gradient-to-b from-black/5 to-transparent"
+          className={clsx(
+            "flex justify-between items-center px-4 py-2 flex-shrink-0 bg-gradient-to-b to-transparent",
+            {
+              "from-foreground/10": isDarkBackground,
+              "from-background/5": !isDarkBackground,
+            }
+          )}
           onMouseDown={handleMouseDown}
         >
           <div
-            className={`flex items-center gap-2 ${
-              isMaximized ? "cursor-default" : "cursor-move"
-            } text-muted hover:text-muted-foreground transition`}
+            className={clsx(
+              `flex items-center gap-2 ${
+                isMaximized ? "cursor-default" : "cursor-move"
+              } transition`,
+              {
+                "text-foreground/70 hover:text-foreground": isDarkBackground,
+                "text-background/70 hover:text-background": isLightBackground,
+                "text-black/70 hover:text-black":
+                  !isDarkBackground && !isLightBackground,
+              }
+            )}
           >
-            <GripVertical className="w-4 h-4" />
-            {CreatedAt && <CreationTime CreatedAt={CreatedAt} />}
+            <GripVertical className="w-3.5 h-3.5" />
+            {CreatedAt && (
+              <CreationTime CreatedAt={CreatedAt} noteColor={NoteColors} />
+            )}
           </div>
-          <div className="flex items-center gap-1">
-            <button onClick={saveBlocks}>
-              <Saving isSaving={isSaving} />
-            </button>
-            <button
+          <div className="flex items-center">
+            <AdaptiveButton
+              onClick={saveBlocks}
+              noteColor={NoteColors}
+              size="sm"
+              className="rounded"
+              disabled={isSaving}
+              title="Manual save via HTTP"
+            >
+              <Saving isSaving={isSaving} noteColor={NoteColors} />
+            </AdaptiveButton>
+
+            <ConnectionStatus
+              color={isConnected ? "green" : "red"}
+              autoSave={isAutoSaving}
+              noteColor={NoteColors}
+            />
+
+            <AdaptiveButton
               onClick={toggleMaximize}
-              className="text-background hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
+              noteColor={NoteColors}
               aria-label={isMaximized ? "Minimize note" : "Maximize note"}
             >
               {isMaximized ? (
-                <Minimize2 className="w-4 h-4" />
+                <Minimize2 className="w-3.5 h-3.5" />
               ) : (
-                <Maximize2 className="w-4 h-4" />
+                <Maximize2 className="w-3.5 h-3.5" />
               )}
-            </button>
-            <button
-              onClick={handleBringForward}
-              className="text-background hover:text-foreground hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
-              aria-label="Bring note forward"
-            >
-              <Forward className="w-4 h-4" />
-            </button>
+            </AdaptiveButton>
 
-            <button
+            <GenerateLink NoteColors={NoteColors} />
+
+            <AdaptiveButton
               onClick={() => {
                 dispatch(deleteStickyNote(ID));
               }}
-              className="text-background hover:text-destructive hover:bg-muted/20 rounded-full p-1.5 transition-all duration-200"
+              noteColor={NoteColors}
+              variant="destructive"
               aria-label="Delete note"
             >
-              <X className="w-4 h-4" />
-            </button>
+              <X className="w-3.5 h-3.5" />
+            </AdaptiveButton>
           </div>
         </div>
 
@@ -462,7 +606,13 @@ const StickyNotes = memo(
         </div>
 
         <div
-          className="absolute bottom-0 right-0 w-full h-4 cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-transparent from-50% to-black/20 to-50%"
+          className={clsx(
+            "absolute bottom-0 right-0 w-full h-4 cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-transparent from-50% to-50%",
+            {
+              "to-foreground/20": isDarkBackground,
+              "to-background/20": !isDarkBackground,
+            }
+          )}
           onMouseDown={handleResizeMouseDown}
         />
       </div>

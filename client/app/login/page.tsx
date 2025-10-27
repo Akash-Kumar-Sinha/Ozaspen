@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { BACKEND_AUTH_DOMAIN } from "../lib/constant";
 
 const Login = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,8 +57,7 @@ const Login = () => {
         if (buttonRef.current) {
           buttonRef.current.style.transform = "scale(1)";
         }
-        window.location.href =
-          "http://localhost:8000/api/v1/auth/oauth/google/login";
+        window.location.href = `${BACKEND_AUTH_DOMAIN}/oauth/google/login`;
       }, 150);
     }
   };
