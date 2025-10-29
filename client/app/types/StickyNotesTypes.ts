@@ -3,6 +3,7 @@ import { Profile } from "./Profile";
 import { GormModel } from "./types";
 
 export type Role = "owner" | "editor" | "viewer";
+export type Access = "public" | "private";
 
 export interface Change {
   Who: string;
@@ -21,8 +22,7 @@ export interface EditorContent extends GormModel {
 
 export interface ShareLink extends GormModel {
   Token: string;
-  ExpiresAt?: string;
-  Role: Role;
+  Access: Access;
   Revoked: boolean;
 }
 

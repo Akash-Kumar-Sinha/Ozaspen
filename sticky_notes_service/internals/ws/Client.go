@@ -13,7 +13,7 @@ type ClientLists map[*Client]bool
 type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn
-	profileID uuid.UUID // Add profileID to store user identity
+	profileID uuid.UUID 
 }
 
 func NewClient(hub *Hub, conn *websocket.Conn, profileID uuid.UUID) *Client {

@@ -90,7 +90,6 @@ func (h *Hub) RemoveClient(client *Client) {
 	}
 }
 
-// Event Function
 func SaveNotes(client *Client, event Event) error {
 	profileID := client.profileID
 	saveRequest := SaveStickyNotesRequest{

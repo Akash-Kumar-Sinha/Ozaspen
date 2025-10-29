@@ -2,11 +2,12 @@ package models
 
 import (
 	authmodels "sticky_notes_service/internals/models/auth_users.models"
-	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 )
+
+
 
 type StickyNote struct {
 	authmodels.GormModel
@@ -26,19 +27,18 @@ type StickyNote struct {
 
 type ShareLink struct {
 	authmodels.GormModel
-	Token     string `gorm:"uniqueIndex;not null"`
-	ExpiresAt *time.Time
-	Role      Role `gorm:"type:text;not null;default:'viewer'"`
-	Revoked   bool `gorm:"not null;default:false"`
+	Token   string `gorm:"uniqueIndex;not null"`
+	Access  Access `gorm:"type:text;not null;default:'private'"`
+	Revoked bool   `gorm:"not null;default:false"`
 }
 
 type Collaborator struct {
 	authmodels.GormModel
 
-	StickyNoteID uuid.UUID  `gorm:"type:uuid;not null;index"`
+	StickyNoteID uuid.UUID  `gorm:"type:uuid;not null;index:idx_note_user,unique"`
 	StickyNote   StickyNote `gorm:"foreignKey:StickyNoteID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
-	ProfileID uuid.UUID          `gorm:"type:uuid;not null;index"`
+	ProfileID uuid.UUID          `gorm:"type:uuid;not null;index:idx_note_user,unique"`
 	Profile   authmodels.Profile `gorm:"foreignKey:ProfileID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 
 	Role Role `gorm:"type:text;not null;default:'viewer'"`

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"sticky_notes_service/internals/database"
 	"sticky_notes_service/internals/models"
 
@@ -23,7 +22,6 @@ func DeleteStickyNote(c *gin.Context) {
 	}
 
 	noteID := c.Param("id")
-	fmt.Printf("noteId %v", noteID)
 	noteUUID, err := uuid.Parse(noteID)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid note ID format"})

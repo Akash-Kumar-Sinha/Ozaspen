@@ -15,9 +15,15 @@ interface EditorProps {
     DefaultStyleSchema
   >;
   customTheme: Theme;
-  setBlock: React.Dispatch<React.SetStateAction<Block[]>>;
+  setBlock?: React.Dispatch<React.SetStateAction<Block[]>>;
+  editable?: boolean;
 }
-const Editor = ({ editor, customTheme, setBlock }: EditorProps) => {
+const Editor = ({
+  editor,
+  customTheme,
+  setBlock,
+  editable = true,
+}: EditorProps) => {
   return (
     <div
       style={{ height: "100%" }}
@@ -26,8 +32,9 @@ const Editor = ({ editor, customTheme, setBlock }: EditorProps) => {
       <BlockNoteView
         editor={editor}
         theme={customTheme}
+        editable={editable}
         onChange={() => {
-          setBlock(editor.document);
+          setBlock?.(editor.document);
         }}
       />
     </div>

@@ -25,6 +25,7 @@ const StickyNotes = memo(
   ({
     ID,
     NoteColors,
+    Title,
     x,
     y,
     width,
@@ -33,6 +34,7 @@ const StickyNotes = memo(
     CreatedAt,
     Content,
   }: NotesState) => {
+    console.log("Rendering StickyNote ID:", ID);
     const dispatch = useAppDispatch();
     const isConnected = useAppSelector(
       (state: RootState) => state.socket.isConnected
@@ -45,6 +47,9 @@ const StickyNotes = memo(
           : undefined,
     });
     const noteRef = useRef<HTMLDivElement>(null);
+    const cornerTopLeftRef = useRef<HTMLDivElement>(null);
+    const cornerTopRightRef = useRef<HTMLDivElement>(null);
+    const resizeHandleRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
     const [position, setPosition] = useState({ x, y });
@@ -62,7 +67,6 @@ const StickyNotes = memo(
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSavedBlocks = useRef<string>("");
 
-    // Get responsive dimensions based on screen size
     const getResponsiveDimensions = useCallback(() => {
       if (typeof window === "undefined")
         return { minWidth: 250, minHeight: 280 };
@@ -70,16 +74,12 @@ const StickyNotes = memo(
       const screenWidth = window.innerWidth;
 
       if (screenWidth < 640) {
-        // Mobile
         return { minWidth: 280, minHeight: 320 };
       } else if (screenWidth < 768) {
-        // Small tablets
         return { minWidth: 300, minHeight: 300 };
       } else if (screenWidth < 1024) {
-        // Tablets
         return { minWidth: 320, minHeight: 320 };
       } else {
-        // Desktop
         return { minWidth: 350, minHeight: 350 };
       }
     }, []);
@@ -167,6 +167,8 @@ const StickyNotes = memo(
     const mutedForegroundColor =
       getCSSVariable("--muted-foreground") || "#a1a1aa";
     const primaryColor = getCSSVariable("--primary") || "#9333ea";
+    const cardColor = getCSSVariable("--card") || "#111111";
+    const borderColor = getCSSVariable("--border") || "#27272a";
 
     const customTheme = {
       colors: {
@@ -180,11 +182,11 @@ const StickyNotes = memo(
         },
         menu: {
           text: foregroundColor,
-          background: backgroundColorVar,
+          background: cardColor,
         },
         tooltip: {
           text: foregroundColor,
-          background: backgroundColorVar,
+          background: cardColor,
         },
         hovered: {
           text: foregroundColor,
@@ -193,8 +195,8 @@ const StickyNotes = memo(
         selected: {
           text: "#000000",
           background: isDarkBackground
-            ? "rgba(0, 0, 0, 0.1)"
-            : "rgba(255, 255, 255, 0.1)",
+            ? "rgba(147, 51, 234, 0.2)"
+            : "rgba(255, 255, 255, 0.2)",
         },
         disabled: {
           text: mutedForegroundColor,
@@ -203,12 +205,10 @@ const StickyNotes = memo(
             : "rgba(255, 255, 255, 0.05)",
         },
         shadow: isDarkBackground
-          ? "rgba(0, 0, 0, 0.1)"
-          : "rgba(255, 255, 255, 0.1)",
-        border: isDarkBackground
-          ? "rgba(0, 0, 0, 0.1)"
-          : "rgba(255, 255, 255, 0.1)",
-        sideMenu: backgroundColorVar,
+          ? "rgba(147, 51, 234, 0.2)"
+          : "rgba(0, 0, 0, 0.1)",
+        border: borderColor,
+        sideMenu: cardColor,
         highlightColors: {
           gray: { text: "#000000", background: "#e4e4e7" },
           brown: { text: "#000000", background: "#d4a574" },
@@ -219,7 +219,7 @@ const StickyNotes = memo(
           blue: { text: "#000000", background: "#93c5fd" },
           purple: { text: "#000000", background: "#c4b5fd" },
           pink: { text: "#000000", background: "#f9a8d4" },
-          black: { text: foregroundColor, background: backgroundColorVar },
+          black: { text: foregroundColor, background: cardColor },
           white: { text: "#000000", background: "#f8f8f8" },
         },
       },
@@ -231,11 +231,10 @@ const StickyNotes = memo(
       if (
         (e.target as HTMLElement).closest("button") ||
         (e.target as HTMLElement).closest(".bn-editor") ||
-        isMaximized // Disable dragging when maximized
+        isMaximized
       ) {
         return;
       }
-      // Only allow dragging when minimized (normal state)
       setIsDragging(true);
       dragStart.current = {
         x: e.clientX,
@@ -250,11 +249,10 @@ const StickyNotes = memo(
       if (
         (e.target as HTMLElement).closest("button") ||
         (e.target as HTMLElement).closest(".bn-editor") ||
-        isMaximized // Disable dragging when maximized
+        isMaximized
       ) {
         return;
       }
-      // Only allow dragging when minimized (normal state)
       const touch = e.touches[0];
       setIsDragging(true);
       dragStart.current = {
@@ -450,6 +448,14 @@ const StickyNotes = memo(
         startWidth: size.width,
         startHeight: size.height,
       };
+
+      if (resizeHandleRef.current) {
+        gsap.to(resizeHandleRef.current, {
+          scale: 1.2,
+          duration: 0.2,
+          ease: "back.out(2)",
+        });
+      }
     };
 
     const handleResizeTouchStart = (e: React.TouchEvent) => {
@@ -462,13 +468,30 @@ const StickyNotes = memo(
         startWidth: size.width,
         startHeight: size.height,
       };
+
+      if (resizeHandleRef.current) {
+        gsap.to(resizeHandleRef.current, {
+          scale: 1.2,
+          duration: 0.2,
+          ease: "back.out(2)",
+        });
+      }
     };
+
+    useEffect(() => {
+      if (!isResizing && resizeHandleRef.current) {
+        gsap.to(resizeHandleRef.current, {
+          scale: 1,
+          duration: 0.3,
+          ease: "power2.out",
+        });
+      }
+    }, [isResizing]);
 
     const toggleMaximize = (e: React.MouseEvent) => {
       e.stopPropagation();
 
       if (!isMaximized) {
-        // Store current absolute position
         setOriginalPosition({ x: position.x, y: position.y });
         setOriginalSize({ width: size.width, height: size.height });
 
@@ -477,19 +500,14 @@ const StickyNotes = memo(
         const windowHeight =
           typeof window !== "undefined" ? window.innerHeight : 800;
 
-        // Responsive max width based on screen size
         let maxWidth;
         if (windowWidth < 640) {
-          // Mobile
           maxWidth = windowWidth * 0.95;
         } else if (windowWidth < 768) {
-          // Small tablets
           maxWidth = windowWidth * 0.92;
         } else if (windowWidth < 1024) {
-          // Tablets
           maxWidth = Math.min(900, windowWidth * 0.9);
         } else {
-          // Desktop
           maxWidth = Math.min(1152, windowWidth * 0.9);
         }
 
@@ -503,6 +521,7 @@ const StickyNotes = memo(
             height: `${maxHeight}px`,
             duration: 0.6,
             ease: "power3.out",
+            boxShadow: `0 25px 50px -12px ${primaryColor}66`,
             onStart: () => {
               gsap.set(noteRef.current, {
                 position: "fixed",
@@ -521,7 +540,6 @@ const StickyNotes = memo(
           });
         }
       } else {
-        // Return to absolute positioning with original position
         if (noteRef.current) {
           gsap.to(noteRef.current, {
             left: `${originalPosition.x}px`,
@@ -530,6 +548,7 @@ const StickyNotes = memo(
             height: `${originalSize.height}px`,
             duration: 0.6,
             ease: "power3.out",
+            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
             onComplete: () => {
               setPosition(originalPosition);
               setSize(originalSize);
@@ -603,7 +622,9 @@ const StickyNotes = memo(
 
     useEffect(() => {
       if (noteRef.current) {
-        gsap.fromTo(
+        const timeline = gsap.timeline();
+
+        timeline.fromTo(
           noteRef.current,
           {
             y: -100,
@@ -620,16 +641,87 @@ const StickyNotes = memo(
             ease: "elastic.out(1, 0.8)",
           }
         );
+
+        if (cornerTopLeftRef.current) {
+          timeline.fromTo(
+            cornerTopLeftRef.current,
+            { scale: 0, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 0.2,
+              duration: 0.4,
+              ease: "back.out(2)",
+            },
+            "-=0.4"
+          );
+        }
+
+        if (cornerTopRightRef.current) {
+          timeline.fromTo(
+            cornerTopRightRef.current,
+            { scale: 0, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 0.2,
+              duration: 0.4,
+              ease: "back.out(2)",
+            },
+            "-=0.3"
+          );
+        }
       }
     }, [ID]);
+
+    const handleNoteMouseEnter = () => {
+      if (!isDragging && !isResizing && !isMaximized) {
+        if (cornerTopLeftRef.current) {
+          gsap.to(cornerTopLeftRef.current, {
+            scale: 1.3,
+            opacity: 0.4,
+            duration: 0.3,
+            ease: "power2.out",
+          });
+        }
+        if (cornerTopRightRef.current) {
+          gsap.to(cornerTopRightRef.current, {
+            scale: 1.3,
+            opacity: 0.4,
+            duration: 0.3,
+            ease: "power2.out",
+            delay: 0.05,
+          });
+        }
+      }
+    };
+
+    const handleNoteMouseLeave = () => {
+      if (!isDragging && !isResizing) {
+        if (cornerTopLeftRef.current) {
+          gsap.to(cornerTopLeftRef.current, {
+            scale: 1,
+            opacity: 0.2,
+            duration: 0.3,
+            ease: "power2.out",
+          });
+        }
+        if (cornerTopRightRef.current) {
+          gsap.to(cornerTopRightRef.current, {
+            scale: 1,
+            opacity: 0.2,
+            duration: 0.3,
+            ease: "power2.out",
+          });
+        }
+      }
+    };
 
     return (
       <div
         ref={noteRef}
         className={clsx(
           "rounded-lg sm:rounded-xl md:rounded-2xl flex flex-col overflow-hidden group transition-all duration-300",
-          "backdrop-blur-sm",
-          isMaximized ? "fixed z-[9999]" : "absolute", // Use absolute for normal state to enable dragging
+          "backdrop-blur-sm sticky-note-scrollbar",
+          isMaximized ? "fixed z-[9999]" : "absolute",
           isMaximized
             ? "shadow-2xl"
             : "shadow-md sm:shadow-lg hover:shadow-xl active:shadow-2xl",
@@ -637,14 +729,12 @@ const StickyNotes = memo(
           isArchiving && "pointer-events-none opacity-50"
         )}
         style={{
-          // For normal state (minimized), use absolute positioning for dragging
           ...(!isMaximized && {
             left: position.x,
             top: position.y,
             width: size.width,
             height: size.height,
           }),
-          // For maximized state, use fixed positioning
           ...(isMaximized && {
             position: "fixed",
             left: `${
@@ -673,8 +763,13 @@ const StickyNotes = memo(
           backgroundColor: colorMap[NoteColors as keyof typeof colorMap],
           zIndex: isMaximized ? 9999 : zIndex,
           touchAction: "none",
+          boxShadow: isMaximized
+            ? `0 25px 50px -12px ${primaryColor}66, 0 0 0 1px ${borderColor}`
+            : undefined,
         }}
         onTouchStart={handleTouchStart}
+        onMouseEnter={handleNoteMouseEnter}
+        onMouseLeave={handleNoteMouseLeave}
         title="Drag to move, resize from bottom-right corner, tap on the top to bring to front"
       >
         <Headers
@@ -686,11 +781,12 @@ const StickyNotes = memo(
           isAutoSaving={isAutoSaving}
           isSaving={isSaving}
           saveBlocks={saveBlocks}
+          Title={Title}
           toggleMaximize={toggleMaximize}
           handleMouseDown={handleMouseDown}
           ID={ID}
         />
-        <main className="flex-1 min-h-0 overflow-auto">
+        <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar">
           <Editor
             editor={editor}
             customTheme={customTheme}
@@ -699,6 +795,7 @@ const StickyNotes = memo(
         </main>
         {!isMaximized && (
           <div
+            ref={resizeHandleRef}
             className={clsx(
               "absolute bottom-0 right-0",
               "w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8",
@@ -721,20 +818,23 @@ const StickyNotes = memo(
             aria-label="Resize note"
           />
         )}
-        {/* Subtle corner decorations - responsive sizes */}
         <div
+          ref={cornerTopLeftRef}
           className={clsx(
-            "absolute top-0 left-0 rounded-br-full opacity-20",
-            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2",
+            "absolute top-0 left-0 rounded-br-full",
+            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2 transition-all duration-300",
             isDarkBackground ? "bg-white" : "bg-black"
           )}
+          style={{ opacity: 0.2 }}
         />
         <div
+          ref={cornerTopRightRef}
           className={clsx(
-            "absolute top-0 right-0 rounded-bl-full opacity-20",
-            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2",
+            "absolute top-0 right-0 rounded-bl-full",
+            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2 transition-all duration-300",
             isDarkBackground ? "bg-white" : "bg-black"
           )}
+          style={{ opacity: 0.2 }}
         />
       </div>
     );

@@ -133,7 +133,6 @@ const NotesSidebar = () => {
           onMouseEnter={() => setShowColorPalette(true)}
           onMouseLeave={() => setShowColorPalette(false)}
         >
-          {/* Floating orbs background */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
             {[...Array(5)].map((_, i) => (
               <motion.div
@@ -161,7 +160,6 @@ const NotesSidebar = () => {
           </div>
 
           <div className="flex-1 flex flex-col relative z-10 py-6 overflow-y-auto">
-            {/* Main trigger button */}
             <div className="px-4 mb-6 flex-shrink-0">
               <motion.div
                 className="relative w-full aspect-square rounded-3xl bg-gradient-to-br from-primary/80 via-purple-500/80 to-pink-500/80 flex items-center justify-center cursor-pointer overflow-hidden group shadow-lg"
@@ -206,7 +204,6 @@ const NotesSidebar = () => {
                   </span>
                 </AnimatePresence>
 
-                {/* Ripple effect on create */}
                 {isCreating && (
                   <motion.div
                     className="absolute inset-0 rounded-3xl"
@@ -226,7 +223,6 @@ const NotesSidebar = () => {
               </motion.div>
             </div>
 
-            {/* Color palette */}
             <AnimatePresence>
               {showColorPalette && (
                 <motion.div
@@ -270,7 +266,6 @@ const NotesSidebar = () => {
             </AnimatePresence>
           </div>
 
-          {/* User section */}
           <motion.div
             className="p-4 border-t border-border/30 relative z-10 flex-shrink-0"
             initial={{ opacity: 0 }}
@@ -282,7 +277,6 @@ const NotesSidebar = () => {
         </motion.aside>
       ) : (
         <>
-          {/* Mobile & Tablet floating button */}
           <motion.div
             className="fixed bottom-6 right-6 z-[9999] sm:bottom-8 sm:right-8"
             initial={{ scale: 0, opacity: 0 }}
@@ -312,7 +306,6 @@ const NotesSidebar = () => {
             </motion.button>
           </motion.div>
 
-          {/* Mobile & Tablet color palette overlay */}
           <AnimatePresence>
             {showColorPalette && (
               <motion.div
