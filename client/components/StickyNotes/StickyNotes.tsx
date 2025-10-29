@@ -726,7 +726,11 @@ const StickyNotes = memo(
             ? "shadow-2xl"
             : "shadow-md sm:shadow-lg hover:shadow-xl active:shadow-2xl",
           isDragging && "cursor-grabbing select-none",
-          isArchiving && "pointer-events-none opacity-50"
+          isArchiving && "pointer-events-none opacity-50",
+          // Add border for black notes to separate from background
+          isDarkBackground
+            ? "border border-white/20 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]"
+            : "border border-transparent"
         )}
         style={{
           ...(!isMaximized && {

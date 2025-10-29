@@ -43,6 +43,18 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Custom properties for dynamic sticky note styling */
+:root {
+  --note-bg-color: transparent;
+  --note-text-color: inherit;
+  --note-border-color: var(--border);
+  --note-primary-color: var(--primary);
+  --note-muted-color: var(--muted-foreground);
+  --note-badge-bg: rgba(255, 255, 255, 0.1);
+  --note-header-border: rgba(255, 255, 255, 0.1);
+  --note-header-bg: rgba(255, 255, 255, 0.05);
+}
+
 @keyframes twinkle {
   0%,
   100% {

@@ -172,6 +172,54 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     fontFamily: "Inter, sans-serif",
   };
 
+  // Set CSS custom properties for dynamic styling
+  useEffect(() => {
+    if (typeof window !== "undefined" && stickyNoteData) {
+      const root = document.documentElement;
+      root.style.setProperty("--note-bg-color", backgroundColor);
+      root.style.setProperty(
+        "--note-text-color",
+        isDarkBackground
+          ? foregroundColor
+          : isLightBackground
+          ? backgroundColorVar
+          : "#000000"
+      );
+      root.style.setProperty("--note-border-color", borderColor);
+      root.style.setProperty("--note-primary-color", primaryColor);
+      root.style.setProperty(
+        "--note-muted-color",
+        isDarkBackground ? mutedForegroundColor : "rgba(0, 0, 0, 0.6)"
+      );
+      root.style.setProperty(
+        "--note-badge-bg",
+        isDarkBackground
+          ? "rgba(255, 255, 255, 0.1)"
+          : isLightBackground
+          ? "rgba(0, 0, 0, 0.1)"
+          : "rgba(255, 255, 255, 0.2)"
+      );
+      root.style.setProperty(
+        "--note-header-border",
+        isDarkBackground ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+      );
+      root.style.setProperty(
+        "--note-header-bg",
+        isDarkBackground ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.05)"
+      );
+    }
+  }, [
+    stickyNoteData,
+    backgroundColor,
+    isDarkBackground,
+    isLightBackground,
+    foregroundColor,
+    backgroundColorVar,
+    borderColor,
+    primaryColor,
+    mutedForegroundColor,
+  ]);
+
   useEffect(() => {
     if (noteRef.current && !isLoading && stickyNoteData) {
       const timeline = gsap.timeline();
@@ -259,11 +307,11 @@ export default function SharedStickyNotePage({ params }: PageProps) {
         duration: 0.5,
         ease: "power3.in",
         onComplete: () => {
-          router.push('/workspace/sticky-notes');
+          router.push("/workspace/sticky-notes");
         },
       });
     } else {
-      router.push('/workspace/sticky-notes');
+      router.push("/workspace/sticky-notes");
     }
   };
 
@@ -290,7 +338,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
             Please check the link and try again.
           </p>
           <button
-            onClick={() => router.push('/workspace/sticky-notes')}
+            onClick={() => router.push("/workspace/sticky-notes")}
             className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
           >
             Go to Sticky Notes
@@ -313,12 +361,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   };
 
   return (
-    <div 
-      className="fixed inset-0 overflow-hidden z-[9999]"
-      style={{
-        background: `linear-gradient(135deg, ${backgroundColorVar} 0%, ${cardColor} 100%)`,
-      }}
-    >
+    <div className="fixed inset-0 overflow-hidden z-[9999] bg-gradient-to-br from-background to-card">
       <div
         ref={noteRef}
         className={clsx(
@@ -327,11 +370,14 @@ export default function SharedStickyNotePage({ params }: PageProps) {
           "rounded-none sm:rounded-xl md:rounded-2xl",
           "shadow-2xl backdrop-blur-sm",
           "transition-all duration-300",
-          "sticky-note-scrollbar"
+          "sticky-note-scrollbar border",
+          isDarkBackground
+            ? "border-white/20 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]"
+            : "border-border/20",
+          "[box-shadow:0_25px_50px_-12px_var(--note-primary-color)33,_0_0_0_1px_var(--note-border-color)]"
         )}
         style={{
           backgroundColor,
-          boxShadow: `0 25px 50px -12px ${primaryColor}33, 0 0 0 1px ${borderColor}`,
         }}
       >
         <div
@@ -344,30 +390,18 @@ export default function SharedStickyNotePage({ params }: PageProps) {
         <div
           className={clsx(
             "absolute top-0 right-0 rounded-bl-full opacity-20 animate-pulse",
-            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2",
+            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2 [animation-delay:0.5s]",
             isDarkBackground ? "bg-white" : "bg-black"
           )}
-          style={{ animationDelay: "0.5s" }}
         />
 
         <header
           className={clsx(
             "flex-shrink-0 px-4 sm:px-6 py-4 sm:py-5",
-            "border-b backdrop-blur-sm",
-            "transition-colors duration-300"
+            "border-b backdrop-blur-sm transition-colors duration-300",
+            "[border-color:var(--note-header-border)]",
+            "[background-color:var(--note-header-bg)]"
           )}
-          style={{
-            borderColor: isDarkBackground
-              ? "rgba(255, 255, 255, 0.1)"
-              : isLightBackground
-              ? "rgba(0, 0, 0, 0.1)"
-              : "rgba(0, 0, 0, 0.1)",
-            backgroundColor: isDarkBackground
-              ? "rgba(0, 0, 0, 0.05)"
-              : isLightBackground
-              ? "rgba(255, 255, 255, 0.05)"
-              : "rgba(255, 255, 255, 0.05)",
-          }}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -375,15 +409,8 @@ export default function SharedStickyNotePage({ params }: PageProps) {
                 ref={headerRef}
                 className={clsx(
                   "text-xl sm:text-2xl md:text-3xl font-semibold truncate mb-2",
-                  "transition-colors duration-300"
+                  "transition-colors duration-300 [color:var(--note-text-color)]"
                 )}
-                style={{
-                  color: isDarkBackground
-                    ? foregroundColor
-                    : isLightBackground
-                    ? backgroundColorVar
-                    : "#000000",
-                }}
               >
                 {stickyNoteData.Note.Title || "Untitled Note"}
               </h1>
@@ -392,20 +419,9 @@ export default function SharedStickyNotePage({ params }: PageProps) {
                   ref={badgeRef}
                   className={clsx(
                     "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium",
-                    "transition-all duration-300 hover:scale-105"
+                    "transition-all duration-300 hover:scale-105",
+                    "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
                   )}
-                  style={{
-                    backgroundColor: isDarkBackground
-                      ? "rgba(255, 255, 255, 0.1)"
-                      : isLightBackground
-                      ? "rgba(0, 0, 0, 0.1)"
-                      : "rgba(255, 255, 255, 0.2)",
-                    color: isDarkBackground
-                      ? foregroundColor
-                      : isLightBackground
-                      ? backgroundColorVar
-                      : "#000000",
-                  }}
                 >
                   {getRoleIcon()}
                   <span>{getRoleText()}</span>
@@ -413,25 +429,19 @@ export default function SharedStickyNotePage({ params }: PageProps) {
                 {stickyNoteData.Note.CreatedAt && (
                   <time
                     className={clsx(
-                      "text-xs sm:text-sm transition-colors duration-300"
+                      "text-xs sm:text-sm transition-colors duration-300 [color:var(--note-muted-color)]"
                     )}
-                    style={{
-                      color: isDarkBackground
-                        ? mutedForegroundColor
-                        : isLightBackground
-                        ? "rgba(0, 0, 0, 0.6)"
-                        : "rgba(0, 0, 0, 0.6)",
-                    }}
                   >
                     Created{" "}
-                    {new Date(stickyNoteData.Note.CreatedAt).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      }
-                    )}
+                    {stickyNoteData.Note.CreatedAt
+                      ? new Date(
+                          stickyNoteData.Note.CreatedAt
+                        ).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "Unknown"}
                   </time>
                 )}
               </div>
@@ -443,21 +453,9 @@ export default function SharedStickyNotePage({ params }: PageProps) {
               className={clsx(
                 "flex-shrink-0 p-2 rounded-lg transition-all duration-300",
                 "hover:scale-110 active:scale-95",
-                "focus:outline-none focus:ring-2 focus:ring-offset-2"
+                "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
               )}
-              style={{
-                backgroundColor: isDarkBackground
-                  ? "rgba(255, 255, 255, 0.1)"
-                  : isLightBackground
-                  ? "rgba(0, 0, 0, 0.1)"
-                  : "rgba(255, 255, 255, 0.2)",
-                color: isDarkBackground
-                  ? foregroundColor
-                  : isLightBackground
-                  ? backgroundColorVar
-                  : "#000000",
-                boxShadow: `0 0 0 0 ${primaryColor}`,
-              }}
               onMouseEnter={(e) => {
                 gsap.to(e.currentTarget, {
                   boxShadow: `0 0 20px 5px ${primaryColor}55`,
@@ -479,24 +477,25 @@ export default function SharedStickyNotePage({ params }: PageProps) {
 
         <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar">
           <div className="h-full">
-            {editor && <Editor editor={editor} customTheme={customTheme}
-            editable={stickyNoteData.CanEdit}
-             />}
+            {editor && (
+              <Editor
+                editor={editor}
+                customTheme={customTheme}
+                editable={stickyNoteData.CanEdit}
+              />
+            )}
           </div>
         </main>
 
         <div
           className={clsx(
             "absolute bottom-0 left-0 right-0 h-1 opacity-20",
-            "transition-opacity duration-300"
+            "transition-opacity duration-300",
+            isDarkBackground
+              ? "bg-gradient-to-r from-transparent via-white to-transparent"
+              : "bg-gradient-to-r from-transparent via-primary to-transparent",
+            "bg-[length:200%_100%] animate-[gradient-shift_3s_ease_infinite]"
           )}
-          style={{
-            background: isDarkBackground
-              ? `linear-gradient(90deg, transparent 0%, ${foregroundColor} 50%, transparent 100%)`
-              : `linear-gradient(90deg, transparent 0%, ${primaryColor} 50%, transparent 100%)`,
-            backgroundSize: "200% 100%",
-            animation: "gradient-shift 3s ease infinite",
-          }}
         />
       </div>
     </div>
