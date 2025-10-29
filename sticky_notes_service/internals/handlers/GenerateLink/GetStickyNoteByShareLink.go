@@ -4,37 +4,17 @@ import (
 	"errors"
 	"net/http"
 	"sticky_notes_service/internals/database"
+	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func GetStickyNoteByShareLink(c *gin.Context) {
 	token := c.Param("token")
 
-	profileIDStr, exists := c.Get("profileID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Login required"})
-		return
-	}
-
-	var profileUUID uuid.UUID
-	switch v := profileIDStr.(type) {
-	case uuid.UUID:
-		profileUUID = v
-	case string:
-		id, err := uuid.Parse(v)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid profile ID format"})
-			return
-		}
-		profileUUID = id
-	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid profile ID type"})
-		return
-	}
+	profileUUID := helpers.GetProfileID(c)
 
 	tx := database.DB.Begin()
 	defer func() {

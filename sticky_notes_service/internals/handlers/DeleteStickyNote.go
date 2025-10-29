@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"sticky_notes_service/internals/database"
+	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
 
 	"github.com/gin-gonic/gin"
@@ -9,17 +10,8 @@ import (
 )
 
 func DeleteStickyNote(c *gin.Context) {
-	profileIDStr, exists := c.Get("profileID")
-	if !exists {
-		c.JSON(500, gin.H{"error": "Profile ID not found in context"})
-		return
-	}
 
-	profileID, err := uuid.Parse(profileIDStr.(string))
-	if err != nil {
-		c.JSON(500, gin.H{"error": "Invalid profile ID format"})
-		return
-	}
+	profileID := helpers.GetProfileID(c)
 
 	noteID := c.Param("id")
 	noteUUID, err := uuid.Parse(noteID)

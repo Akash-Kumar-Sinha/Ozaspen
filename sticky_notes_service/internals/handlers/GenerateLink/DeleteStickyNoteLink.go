@@ -2,6 +2,7 @@ package generatelink
 
 import (
 	"sticky_notes_service/internals/database"
+	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
 
 	"github.com/gin-gonic/gin"
@@ -9,27 +10,7 @@ import (
 )
 
 func DeleteStickyNoteLink(c *gin.Context) {
-	profileIDStr, exists := c.Get("profileID")
-	if !exists {
-		c.JSON(401, gin.H{"error": "Unauthorized"})
-		return
-	}
-
-	var profileID uuid.UUID
-	switch v := profileIDStr.(type) {
-	case uuid.UUID:
-		profileID = v
-	case string:
-		id, err := uuid.Parse(v)
-		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid profile ID format"})
-			return
-		}
-		profileID = id
-	default:
-		c.JSON(400, gin.H{"error": "Invalid profile ID type"})
-		return
-	}
+	profileID := helpers.GetProfileID(c)
 
 	noteID := c.Param("id")
 	noteUUID, err := uuid.Parse(noteID)
@@ -48,7 +29,7 @@ func DeleteStickyNoteLink(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "No share link associated with this sticky note"})
 		return
 	}
-	
+
 	tx := database.DB.Begin()
 
 	var shareLink models.ShareLink

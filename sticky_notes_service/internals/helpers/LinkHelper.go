@@ -1,4 +1,4 @@
-package generatelink
+package helpers
 
 import (
 	"crypto/rand"
@@ -21,7 +21,7 @@ func generateToken() (string, error) {
 	return token, nil
 }
 
-func generateLink() (string, error) {
+func GenerateLink() (string, error) {
 	for {
 		token, err := generateToken()
 		if err != nil {

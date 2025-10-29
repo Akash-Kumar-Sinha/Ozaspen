@@ -3,6 +3,7 @@ package generatelink
 import (
 	"net/http"
 	"sticky_notes_service/internals/database"
+	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
 
 	"github.com/gin-gonic/gin"
@@ -10,17 +11,8 @@ import (
 )
 
 func RevokeShareLink(c *gin.Context) {
-	profileIDStr, exists := c.Get("profileID")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Profile ID not found in context"})
-		return
-	}
 
-	profileID, err := uuid.Parse(profileIDStr.(string))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid profile ID format"})
-		return
-	}
+	profileID := helpers.GetProfileID(c)
 
 	noteUUID, err := uuid.Parse(c.Param("id"))
 	if err != nil {

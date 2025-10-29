@@ -2,7 +2,7 @@ package ws
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -13,7 +13,7 @@ type ClientLists map[*Client]bool
 type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn
-	profileID uuid.UUID 
+	profileID uuid.UUID
 }
 
 func NewClient(hub *Hub, conn *websocket.Conn, profileID uuid.UUID) *Client {
@@ -33,7 +33,7 @@ func (client *Client) ReadPump() {
 		messageType, payload, err := client.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("Error reading message: %v\n", err)
+				log.Printf("Error reading message: %v\n", err)
 			}
 			break
 		}
@@ -41,13 +41,12 @@ func (client *Client) ReadPump() {
 		var req Event
 		if messageType == websocket.TextMessage {
 			if err := json.Unmarshal(payload, &req); err != nil {
-				fmt.Printf("Error unmarshaling message: %v\n", err)
+				log.Printf("Error unmarshaling message: %v\n", err)
 				continue
 			}
-			fmt.Printf("\nThe parsed data is %v\n", req)
 
 			if err := client.hub.routeEvent(req, client); err != nil {
-				fmt.Printf("Error handling event: %v\n", err)
+				log.Printf("Error handling event: %v\n", err)
 			}
 		}
 	}

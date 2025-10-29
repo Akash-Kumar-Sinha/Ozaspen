@@ -2,6 +2,7 @@ package api
 
 import (
 	"sticky_notes_service/internals/handlers"
+	collaborator "sticky_notes_service/internals/handlers/Collaborator"
 	generatelink "sticky_notes_service/internals/handlers/GenerateLink"
 	"sticky_notes_service/internals/middlewares"
 	"sticky_notes_service/internals/ws"
@@ -20,4 +21,5 @@ func StickyNotesRoutes(router *gin.RouterGroup) {
 	router.PUT("/change_access/:id", middlewares.Auth(), generatelink.ChangeAccess)
 	router.DELETE("/delete_sticky_note_link/:id", middlewares.Auth(), generatelink.DeleteStickyNoteLink)
 
+	router.PUT("/add_collaborator/:id", middlewares.Auth(), collaborator.AddCollaborator)
 }
