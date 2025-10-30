@@ -21,5 +21,7 @@ func StickyNotesRoutes(router *gin.RouterGroup) {
 	router.PUT("/change_access/:id", middlewares.Auth(), generatelink.ChangeAccess)
 	router.DELETE("/delete_sticky_note_link/:id", middlewares.Auth(), generatelink.DeleteStickyNoteLink)
 
-	router.PUT("/add_collaborator/:id", middlewares.Auth(), collaborator.AddCollaborator)
+	router.GET("/search_username/:username",middlewares.Auth(),  handlers.SearchUsername)
+	router.PUT("/add_collaborator", middlewares.Auth(), collaborator.AddCollaborator)
+	router.GET("/get_collaborators/:id", middlewares.Auth(), collaborator.GetCollaborator)
 }

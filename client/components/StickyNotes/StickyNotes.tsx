@@ -451,7 +451,7 @@ const StickyNotes = memo(
 
       if (resizeHandleRef.current) {
         gsap.to(resizeHandleRef.current, {
-          scale: 1.2,
+          scale: 1.3,
           duration: 0.2,
           ease: "back.out(2)",
         });
@@ -471,7 +471,7 @@ const StickyNotes = memo(
 
       if (resizeHandleRef.current) {
         gsap.to(resizeHandleRef.current, {
-          scale: 1.2,
+          scale: 1.3,
           duration: 0.2,
           ease: "back.out(2)",
         });
@@ -573,7 +573,7 @@ const StickyNotes = memo(
 
       if (noteRef.current) {
         gsap.to(noteRef.current, {
-          scale: 1.03,
+          scale: 1.02,
           duration: 0.15,
           ease: "back.out(1.7)",
           yoyo: true,
@@ -629,16 +629,16 @@ const StickyNotes = memo(
           {
             y: -100,
             opacity: 0,
-            scale: 0.9,
-            rotateX: -15,
+            scale: 0.95,
+            rotateX: -10,
           },
           {
             y: 0,
             opacity: 1,
             scale: 1,
             rotateX: 0,
-            duration: 0.7,
-            ease: "elastic.out(1, 0.8)",
+            duration: 0.65,
+            ease: "power3.out",
           }
         );
 
@@ -648,11 +648,11 @@ const StickyNotes = memo(
             { scale: 0, opacity: 0 },
             {
               scale: 1,
-              opacity: 0.2,
-              duration: 0.4,
-              ease: "back.out(2)",
+              opacity: 0.15,
+              duration: 0.35,
+              ease: "back.out(1.7)",
             },
-            "-=0.4"
+            "-=0.35"
           );
         }
 
@@ -662,11 +662,11 @@ const StickyNotes = memo(
             { scale: 0, opacity: 0 },
             {
               scale: 1,
-              opacity: 0.2,
-              duration: 0.4,
-              ease: "back.out(2)",
+              opacity: 0.15,
+              duration: 0.35,
+              ease: "back.out(1.7)",
             },
-            "-=0.3"
+            "-=0.25"
           );
         }
       }
@@ -676,19 +676,19 @@ const StickyNotes = memo(
       if (!isDragging && !isResizing && !isMaximized) {
         if (cornerTopLeftRef.current) {
           gsap.to(cornerTopLeftRef.current, {
-            scale: 1.3,
-            opacity: 0.4,
-            duration: 0.3,
+            scale: 1.2,
+            opacity: 0.3,
+            duration: 0.25,
             ease: "power2.out",
           });
         }
         if (cornerTopRightRef.current) {
           gsap.to(cornerTopRightRef.current, {
-            scale: 1.3,
-            opacity: 0.4,
-            duration: 0.3,
+            scale: 1.2,
+            opacity: 0.3,
+            duration: 0.25,
             ease: "power2.out",
-            delay: 0.05,
+            delay: 0.03,
           });
         }
       }
@@ -699,16 +699,16 @@ const StickyNotes = memo(
         if (cornerTopLeftRef.current) {
           gsap.to(cornerTopLeftRef.current, {
             scale: 1,
-            opacity: 0.2,
-            duration: 0.3,
+            opacity: 0.15,
+            duration: 0.25,
             ease: "power2.out",
           });
         }
         if (cornerTopRightRef.current) {
           gsap.to(cornerTopRightRef.current, {
             scale: 1,
-            opacity: 0.2,
-            duration: 0.3,
+            opacity: 0.15,
+            duration: 0.25,
             ease: "power2.out",
           });
         }
@@ -719,18 +719,17 @@ const StickyNotes = memo(
       <div
         ref={noteRef}
         className={clsx(
-          "rounded-lg sm:rounded-xl md:rounded-2xl flex flex-col overflow-hidden group transition-all duration-300",
+          "rounded-xl flex flex-col overflow-hidden group transition-all duration-300",
           "backdrop-blur-sm sticky-note-scrollbar",
           isMaximized ? "fixed z-[9999]" : "absolute",
           isMaximized
             ? "shadow-2xl"
-            : "shadow-md sm:shadow-lg hover:shadow-xl active:shadow-2xl",
-          isDragging && "cursor-grabbing select-none",
+            : "shadow-lg hover:shadow-xl active:shadow-2xl",
+          isDragging && "cursor-grabbing select-none scale-[1.01]",
           isArchiving && "pointer-events-none opacity-50",
-          // Add border for black notes to separate from background
           isDarkBackground
-            ? "border border-white/20 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]"
-            : "border border-transparent"
+            ? "border-2 border-white/10"
+            : "border-2 border-black/5"
         )}
         style={{
           ...(!isMaximized && {
@@ -774,7 +773,7 @@ const StickyNotes = memo(
         onTouchStart={handleTouchStart}
         onMouseEnter={handleNoteMouseEnter}
         onMouseLeave={handleNoteMouseLeave}
-        title="Drag to move, resize from bottom-right corner, tap on the top to bring to front"
+        title="Drag to move, resize from bottom-right corner"
       >
         <Headers
           isDarkBackground={isDarkBackground}
@@ -790,7 +789,7 @@ const StickyNotes = memo(
           handleMouseDown={handleMouseDown}
           ID={ID}
         />
-        <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar">
+        <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar px-4 py-3">
           <Editor
             editor={editor}
             customTheme={customTheme}
@@ -802,43 +801,46 @@ const StickyNotes = memo(
             ref={resizeHandleRef}
             className={clsx(
               "absolute bottom-0 right-0",
-              "w-12 h-12 sm:w-10 sm:h-10 md:w-8 md:h-8",
+              "w-10 h-10",
               "cursor-nwse-resize touch-none",
-              "opacity-40 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300",
+              "opacity-30 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300",
               "bg-gradient-to-br from-transparent via-transparent",
-              isDarkBackground ? "to-white/40" : "to-black/40",
+              isDarkBackground ? "to-white/30" : "to-black/30",
               "hover:scale-110 active:scale-110",
-              "after:content-[''] after:absolute",
-              "after:bottom-1.5 after:right-1.5 sm:after:bottom-1 sm:after:right-1",
-              "after:w-4 after:h-4 sm:after:w-3 sm:after:h-3",
-              "after:border-r-2 after:border-b-2 after:rounded-br",
-              isDarkBackground
-                ? "after:border-white/60 hover:after:border-white/80 active:after:border-white/80"
-                : "after:border-black/60 hover:after:border-black/80 active:after:border-black/80",
-              "after:transition-colors"
+              "flex items-end justify-end p-1.5"
             )}
             onMouseDown={handleResizeMouseDown}
             onTouchStart={handleResizeTouchStart}
             aria-label="Resize note"
-          />
+          >
+            <div
+              className={clsx(
+                "w-4 h-4 border-r-2 border-b-2 rounded-br-md",
+                isDarkBackground
+                  ? "border-white/50 hover:border-white/70"
+                  : "border-black/50 hover:border-black/70",
+                "transition-colors"
+              )}
+            />
+          </div>
         )}
         <div
           ref={cornerTopLeftRef}
           className={clsx(
             "absolute top-0 left-0 rounded-br-full",
-            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2 transition-all duration-300",
+            "w-3 h-3 transition-all duration-300",
             isDarkBackground ? "bg-white" : "bg-black"
           )}
-          style={{ opacity: 0.2 }}
+          style={{ opacity: 0.15 }}
         />
         <div
           ref={cornerTopRightRef}
           className={clsx(
             "absolute top-0 right-0 rounded-bl-full",
-            "w-4 h-4 sm:w-3 sm:h-3 md:w-2 md:h-2 transition-all duration-300",
+            "w-3 h-3 transition-all duration-300",
             isDarkBackground ? "bg-white" : "bg-black"
           )}
-          style={{ opacity: 0.2 }}
+          style={{ opacity: 0.15 }}
         />
       </div>
     );

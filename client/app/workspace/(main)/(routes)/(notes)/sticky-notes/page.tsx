@@ -4,8 +4,11 @@ import StickyNotes from "@/components/StickyNotes/StickyNotes";
 import { fetchStickyNotes, NotesState } from "@/app/lib/features/notesSlice";
 import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import LoadingStickyNotes from "@/components/StickyNotes/LoadingStickyNotes";
+import { connect, getSocket } from "@/app/lib/features/socketSlice";
+import { RootState } from "@/app/lib/store";
+
 
 const Notes = () => {
   const { notes, isLoading, error } = useAppSelector((state) => state.notes);

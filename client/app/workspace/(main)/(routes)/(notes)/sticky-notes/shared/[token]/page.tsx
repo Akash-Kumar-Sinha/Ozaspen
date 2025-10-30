@@ -14,6 +14,9 @@ import { clsx } from "clsx";
 import { Eye, Lock, Users, X } from "lucide-react";
 import LoadingStickyNotes from "@/components/StickyNotes/LoadingStickyNotes";
 import { useRouter } from "next/navigation";
+import { connect, getSocket } from "@/app/lib/features/socketSlice";
+import { RootState } from "@/app/lib/store";
+import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
 
 interface PageProps {
   params: Promise<{
@@ -28,7 +31,11 @@ interface StickyNoteData {
 }
 
 export default function SharedStickyNotePage({ params }: PageProps) {
-  const { token } = use(params);
+  const { token } = use(params)
+  ;  const dispatch = useAppDispatch();
+  const isConnected = useAppSelector(
+    (state: RootState) => state.socket.isConnected
+  );
   const router = useRouter();
   const [stickyNoteData, setStickyNoteData] = useState<StickyNoteData | null>(
     null
@@ -314,6 +321,16 @@ export default function SharedStickyNotePage({ params }: PageProps) {
       router.push("/workspace/sticky-notes");
     }
   };
+
+  const connectSockets = useCallback(() => {
+    dispatch(connect());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!isConnected) {
+      connectSockets();
+    }
+  }, [isConnected, connectSockets]);
 
   if (isLoading) {
     return (
