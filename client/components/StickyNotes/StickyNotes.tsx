@@ -208,7 +208,7 @@ const StickyNotes = memo(
           ? "rgba(147, 51, 234, 0.2)"
           : "rgba(0, 0, 0, 0.1)",
         border: borderColor,
-        sideMenu: cardColor,
+        sideMenu: isDarkBackground ? "#e4e4e7" : cardColor,
         highlightColors: {
           gray: { text: "#000000", background: "#e4e4e7" },
           brown: { text: "#000000", background: "#d4a574" },
@@ -611,8 +611,8 @@ const StickyNotes = memo(
     }, [blocks, ID]);
 
     const connectSockets = useCallback(() => {
-      dispatch(connect());
-    }, [dispatch]);
+      dispatch(connect(ID));
+    }, [ID, dispatch]);
 
     useEffect(() => {
       if (!isConnected) {
@@ -788,6 +788,7 @@ const StickyNotes = memo(
           toggleMaximize={toggleMaximize}
           handleMouseDown={handleMouseDown}
           ID={ID}
+          Role="owner"
         />
         <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar px-4 py-3">
           <Editor

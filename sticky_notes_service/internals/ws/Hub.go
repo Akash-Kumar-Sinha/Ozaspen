@@ -19,21 +19,32 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type Hub struct {
+type Room struct {
 	clients ClientLists
 	sync.RWMutex
+}
 
+type Hub struct {
+	rooms    map[string]*Room
 	handlers map[string]EventHandler
+	sync.RWMutex
 }
 
 func NewHub() *Hub {
 	h := &Hub{
-		clients:  make(ClientLists),
+		rooms:    make(map[string]*Room),
 		handlers: make(map[string]EventHandler),
 	}
 	h.setUpEventHandlers()
 	return h
 }
+
+func NewRoom() *Room {
+	return &Room{
+		clients: make(ClientLists),
+	}
+}
+
 func (h *Hub) setUpEventHandlers() {
 	h.handlers[EventSaveStickyNote] = SaveNotes
 }
@@ -46,6 +57,12 @@ func (m *Hub) routeEvent(event Event, client *Client) error {
 }
 
 func (h *Hub) ServerWs(c *gin.Context) {
+	stickyNoteID := c.Param("stickyNoteID")
+	if stickyNoteID == "" {
+		log.Printf("Sticky Note ID is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Sticky Note ID is required"})
+		return
+	}
 	profileIDStr, exists := c.Get("profileID")
 	if !exists {
 		log.Printf("Profile ID not found in context")
@@ -68,25 +85,42 @@ func (h *Hub) ServerWs(c *gin.Context) {
 
 	client := NewClient(h, conn, profileID)
 
-	h.AddClient(client)
+	h.AddClient(stickyNoteID, client)
 
-	go client.ReadPump()
+	go client.ReadPump(stickyNoteID)
 }
 
-func (h *Hub) AddClient(client *Client) {
+func (h *Hub) AddClient(stickyNoteID string, client *Client) {
 	h.Lock()
 	defer h.Unlock()
 	log.Printf("Adding new client")
-	h.clients[client] = true
+	room, exists := h.rooms[stickyNoteID]
+	if !exists {
+		room = NewRoom()
+		h.rooms[stickyNoteID] = room
+	}
+	room.Lock()
+	defer room.Unlock()
+	room.clients[client] = true
+	client.rooms[stickyNoteID] = room
+
 }
 
-func (h *Hub) RemoveClient(client *Client) {
+func (h *Hub) RemoveClient(stickyNoteID string, client *Client) {
 	h.Lock()
 	defer h.Unlock()
 	log.Printf("Removing client")
-	if _, ok := h.clients[client]; !ok {
-		client.conn.Close()
-		delete(h.clients, client)
+	room, exists := h.rooms[stickyNoteID]
+	if exists {
+		room.Lock()
+		defer room.Unlock()
+		if _, ok := room.clients[client]; ok {
+			delete(room.clients, client)
+			delete(client.rooms, stickyNoteID)
+			if len(room.clients) == 0 {
+				delete(h.rooms, stickyNoteID)
+			}
+		}
 	}
 }
 

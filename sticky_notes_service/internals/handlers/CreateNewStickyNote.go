@@ -21,13 +21,20 @@ func CreateNewStickyNote(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
+	tx := database.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
 	content := models.Content{
 		Blocks:  []byte("{}"),
 		Changes: models.ChangesList{},
 	}
 
-	if err := database.DB.Create(&content).Error; err != nil {
+	if err := tx.Create(&content).Error; err != nil {
+		tx.Rollback()
 		c.JSON(500, gin.H{"error": "Failed to create sticky note content"})
 		return
 	}
@@ -38,8 +45,26 @@ func CreateNewStickyNote(c *gin.Context) {
 		ContentID:  &content.ID,
 	}
 
-	if err := database.DB.Create(&stickyNotes).Error; err != nil {
+	if err := tx.Create(&stickyNotes).Error; err != nil {
+		tx.Rollback()
 		c.JSON(500, gin.H{"error": "Failed to create sticky note"})
+		return
+	}
+
+	collaboratorEntry := models.Collaborator{
+		StickyNoteID: stickyNotes.ID,
+		ProfileID:    profileID,
+		Role:         models.RoleOwner,
+	}
+
+	if err := tx.Create(&collaboratorEntry).Error; err != nil {
+		tx.Rollback()
+		c.JSON(500, gin.H{"error": "Failed to create collaborator entry"})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(500, gin.H{"error": "Failed to commit transaction"})
 		return
 	}
 

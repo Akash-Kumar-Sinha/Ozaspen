@@ -14,6 +14,7 @@ type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn
 	profileID uuid.UUID
+	rooms     map[string]*Room
 }
 
 func NewClient(hub *Hub, conn *websocket.Conn, profileID uuid.UUID) *Client {
@@ -21,12 +22,13 @@ func NewClient(hub *Hub, conn *websocket.Conn, profileID uuid.UUID) *Client {
 		hub:       hub,
 		conn:      conn,
 		profileID: profileID,
+		rooms:     make(map[string]*Room),
 	}
 }
 
-func (client *Client) ReadPump() {
+func (client *Client) ReadPump(stickyNoteID string) {
 	defer func() {
-		client.hub.RemoveClient(client)
+		client.hub.RemoveClient(stickyNoteID, client)
 	}()
 
 	for {

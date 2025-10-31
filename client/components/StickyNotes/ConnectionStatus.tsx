@@ -11,7 +11,7 @@ export const ConnectionStatus = ({
   color: "red" | "green";
   autoSave: boolean;
   noteColor?: string;
-  onClick: () => void;
+  onClick?: () => void;
   isSaving: boolean;
 }) => {
   const colorClass = color === "green" ? "text-green-800" : "text-red-800";

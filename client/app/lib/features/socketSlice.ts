@@ -27,13 +27,20 @@ export const socketSlice = createSlice({
 
 export const { setConnected, disconnect } = socketSlice.actions;
 
-export const connect = () => (dispatch: AppDispatch) => {
+export const connect = (stickyNoteID: string) => (dispatch: AppDispatch) => {
   if (globalSocket) {
     console.log("WebSocket already exists, skipping connection");
     return;
   }
 
-  const url = WEBSOCKET_STICKYNOTES_DOMAIN;
+  if (!stickyNoteID) {
+    console.error(
+      "Sticky Note ID is required to establish WebSocket connection."
+    );
+    return;
+  }
+
+  const url = `${WEBSOCKET_STICKYNOTES_DOMAIN}/${stickyNoteID}`;
   if (!url) {
     console.error(
       "WebSocket URL is not defined. Check your environment variables."

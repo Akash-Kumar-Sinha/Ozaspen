@@ -15,6 +15,7 @@ func StickyNotesRoutes(router *gin.RouterGroup) {
 	router.POST("/save_sticky_notes", middlewares.Auth(), ws.SaveStickyNotes)
 	router.GET("/get_sticky_notes", middlewares.Auth(), handlers.GetStickyNotes)
 	router.DELETE("/delete_sticky_note/:id", middlewares.Auth(), handlers.DeleteStickyNote)
+	router.PUT("/change_title", middlewares.Auth(), handlers.ChangeStickyNoteTitle)
 	router.PUT("/generate_share_link/:id", middlewares.Auth(), generatelink.GenerateShareLink)
 	router.PUT("/revoke_share_link/:id", middlewares.Auth(), generatelink.RevokeShareLink)
 	router.GET("/get_sticky_note_by_share_link/:token", middlewares.Auth(), generatelink.GetStickyNoteByShareLink)
@@ -24,4 +25,5 @@ func StickyNotesRoutes(router *gin.RouterGroup) {
 	router.GET("/search_username/:username",middlewares.Auth(),  handlers.SearchUsername)
 	router.PUT("/add_collaborator", middlewares.Auth(), collaborator.AddCollaborator)
 	router.GET("/get_collaborators/:id", middlewares.Auth(), collaborator.GetCollaborator)
+	router.PUT("/change_collaborator_role", middlewares.Auth(), collaborator.ChangeCollaboratorRole)
 }

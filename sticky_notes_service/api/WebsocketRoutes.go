@@ -9,5 +9,5 @@ import (
 
 func WebsocketRoutes(router *gin.RouterGroup) {
 	hub := ws.NewHub()
-	router.GET("/ws", middlewares.Auth(), hub.ServerWs)
+	router.GET("/ws/:stickyNoteID", middlewares.Auth(), hub.ServerWs)
 }

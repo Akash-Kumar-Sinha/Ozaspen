@@ -17,6 +17,11 @@ import { useRouter } from "next/navigation";
 import { connect, getSocket } from "@/app/lib/features/socketSlice";
 import { RootState } from "@/app/lib/store";
 import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
+import { Block } from "@blocknote/core";
+import { ConnectionStatus } from "@/components/StickyNotes/ConnectionStatus";
+import StickyNoteTitle from "@/components/StickyNotes/StickyNoteTitle";
+import { AnimatePresence } from "framer-motion";
+import Collaborator from "@/components/StickyNotes/Collaborator";
 
 interface PageProps {
   params: Promise<{
@@ -31,8 +36,8 @@ interface StickyNoteData {
 }
 
 export default function SharedStickyNotePage({ params }: PageProps) {
-  const { token } = use(params)
-  ;  const dispatch = useAppDispatch();
+  const { token } = use(params);
+  const dispatch = useAppDispatch();
   const isConnected = useAppSelector(
     (state: RootState) => state.socket.isConnected
   );
@@ -46,6 +51,13 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   const headerRef = useRef<HTMLHeadingElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [blocks, setBlocks] = useState<Block[]>(
+    stickyNoteData?.Note.Content?.Blocks || []
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedBlocks = useRef<string>("");
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -179,7 +191,6 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     fontFamily: "Inter, sans-serif",
   };
 
-  // Set CSS custom properties for dynamic styling
   useEffect(() => {
     if (typeof window !== "undefined" && stickyNoteData) {
       const root = document.documentElement;
@@ -323,14 +334,72 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   };
 
   const connectSockets = useCallback(() => {
-    dispatch(connect());
-  }, [dispatch]);
+    if (!stickyNoteData) return;
+    dispatch(connect(stickyNoteData?.Note.ID));
+  }, [dispatch, stickyNoteData]);
 
   useEffect(() => {
     if (!isConnected) {
       connectSockets();
     }
   }, [isConnected, connectSockets]);
+
+  const autoSaveBlocks = useCallback(async () => {
+    if (blocks.length === 0) return;
+
+    const socket = getSocket();
+    if (!isConnected || !socket) return;
+
+    const currentBlocksString = JSON.stringify(blocks);
+    if (currentBlocksString === lastSavedBlocks.current) return;
+
+    try {
+      setIsAutoSaving(true);
+      socket.send(
+        JSON.stringify({
+          type: "save_sticky_note",
+          data: {
+            sticky_note_id: stickyNoteData?.Note.ID,
+            blocks: blocks,
+          },
+        })
+      );
+      console.log("WebSocket auto-save sent");
+
+      lastSavedBlocks.current = currentBlocksString;
+      setTimeout(() => {
+        setIsAutoSaving(false);
+      }, 800);
+    } catch (error) {
+      console.error("WebSocket auto-save failed:", error);
+      setIsAutoSaving(false);
+    }
+  }, [blocks, isConnected, stickyNoteData?.Note.ID]);
+
+  useEffect(() => {
+    if (blocks.length === 0) return;
+
+    const socket = getSocket();
+    if (!isConnected || !socket) return;
+
+    const currentBlocksString = JSON.stringify(blocks);
+
+    if (currentBlocksString === lastSavedBlocks.current) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      autoSaveBlocks();
+    }, 2000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [blocks, isConnected, autoSaveBlocks]);
 
   if (isLoading) {
     return (
@@ -366,9 +435,10 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   }
 
   const getRoleIcon = () => {
-    if (stickyNoteData.Role === "owner") return <Users className="h-4 w-4" />;
-    if (stickyNoteData.CanEdit) return <Users className="h-4 w-4" />;
-    return <Eye className="h-4 w-4" />;
+    if (stickyNoteData.Role === "owner")
+      return <Users className="h-3.5 w-3.5" />;
+    if (stickyNoteData.CanEdit) return <Users className="h-3.5 w-3.5" />;
+    return <Eye className="h-3.5 w-3.5" />;
   };
 
   const getRoleText = () => {
@@ -414,81 +484,74 @@ export default function SharedStickyNotePage({ params }: PageProps) {
 
         <header
           className={clsx(
-            "flex-shrink-0 px-4 sm:px-6 py-4 sm:py-5",
+            "flex-shrink-0 px-4 sm:px-6 py-2.5 sm:py-3",
             "border-b backdrop-blur-sm transition-colors duration-300",
             "[border-color:var(--note-header-border)]",
             "[background-color:var(--note-header-bg)]"
           )}
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h1
-                ref={headerRef}
+          <div className="flex items-center justify-between gap-3">
+            <StickyNoteTitle
+              stickyNoteId={stickyNoteData.Note.ID}
+              title={stickyNoteData.Note.Title}
+              isDarkBackground={isDarkBackground}
+              role={stickyNoteData.Role}
+            />
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div
+                ref={badgeRef}
                 className={clsx(
-                  "text-xl sm:text-2xl md:text-3xl font-semibold truncate mb-2",
-                  "transition-colors duration-300 [color:var(--note-text-color)]"
+                  "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
+                  "transition-all duration-300",
+                  "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
                 )}
               >
-                {stickyNoteData.Note.Title || "Untitled Note"}
-              </h1>
-              <div className="flex items-center gap-3 flex-wrap">
-                <div
-                  ref={badgeRef}
-                  className={clsx(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium",
-                    "transition-all duration-300 hover:scale-105",
-                    "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
-                  )}
-                >
-                  {getRoleIcon()}
-                  <span>{getRoleText()}</span>
-                </div>
-                {stickyNoteData.Note.CreatedAt && (
-                  <time
-                    className={clsx(
-                      "text-xs sm:text-sm transition-colors duration-300 [color:var(--note-muted-color)]"
-                    )}
-                  >
-                    Created{" "}
-                    {stickyNoteData.Note.CreatedAt
-                      ? new Date(
-                          stickyNoteData.Note.CreatedAt
-                        ).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : "Unknown"}
-                  </time>
-                )}
+                {getRoleIcon()}
+                <span className="hidden sm:inline">{getRoleText()}</span>
               </div>
-            </div>
+              <AnimatePresence>
+                <Collaborator
+                  noteId={stickyNoteData.Note.ID}
+                  noteColor={stickyNoteData.Note.NoteColors}
+                  isDarkBackground={isDarkBackground}
+                  role={stickyNoteData.Role}
+                />
+              </AnimatePresence>
 
-            <button
-              ref={closeButtonRef}
-              onClick={handleClose}
-              className={clsx(
-                "flex-shrink-0 p-2 rounded-lg transition-all duration-300",
-                "hover:scale-110 active:scale-95",
-                "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
-                "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
-              )}
-              onMouseEnter={(e) => {
-                gsap.to(e.currentTarget, {
-                  boxShadow: `0 0 20px 5px ${primaryColor}55`,
-                  duration: 0.3,
-                });
-              }}
-              onMouseLeave={(e) => {
-                gsap.to(e.currentTarget, {
-                  boxShadow: `0 0 0 0 ${primaryColor}`,
-                  duration: 0.3,
-                });
-              }}
-              aria-label="Close sticky note"
-            >
-              <X className="h-5 w-5" />
-            </button>
+              <ConnectionStatus
+                color={isConnected ? "green" : "red"}
+                autoSave={isAutoSaving}
+                noteColor={NoteColors}
+                isSaving={isSaving}
+              />
+
+              <button
+                ref={closeButtonRef}
+                onClick={handleClose}
+                className={clsx(
+                  "flex-shrink-0 p-1.5 rounded-lg transition-all duration-300",
+                  "hover:scale-110 active:scale-95",
+                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                  "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
+                )}
+                onMouseEnter={(e) => {
+                  gsap.to(e.currentTarget, {
+                    boxShadow: `0 0 20px 5px ${primaryColor}55`,
+                    duration: 0.3,
+                  });
+                }}
+                onMouseLeave={(e) => {
+                  gsap.to(e.currentTarget, {
+                    boxShadow: `0 0 0 0 ${primaryColor}`,
+                    duration: 0.3,
+                  });
+                }}
+                aria-label="Close sticky note"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -499,6 +562,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
                 editor={editor}
                 customTheme={customTheme}
                 editable={stickyNoteData.CanEdit}
+                setBlock={setBlocks}
               />
             )}
           </div>
