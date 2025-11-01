@@ -46,6 +46,9 @@ const StickyNotes = memo(
         Content?.Blocks && Content.Blocks.length > 0
           ? Content.Blocks
           : undefined,
+      placeholders: {
+        emptyDocument: "Start typing..",
+      },
     });
     const noteRef = useRef<HTMLDivElement>(null);
     const resizeHandleRef = useRef<HTMLDivElement>(null);
