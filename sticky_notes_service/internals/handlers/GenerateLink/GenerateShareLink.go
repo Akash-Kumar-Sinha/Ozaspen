@@ -22,8 +22,8 @@ func GenerateShareLink(c *gin.Context) {
 	}
 
 	var note models.StickyNote
-	if err := database.DB.Where("id = ? AND owner_id = ?", noteUUID, profileID).First(&note).Error; err != nil {
-		c.JSON(404, gin.H{"error": "Sticky note not found or not owned by user"})
+	if err := database.DB.Where("id = ? ", noteUUID).First(&note).Error; err != nil {
+		c.JSON(500, gin.H{"error": "Failed to fetch sticky note"})
 		return
 	}
 
@@ -52,7 +52,11 @@ func GenerateShareLink(c *gin.Context) {
 			return
 		}
 	}
-
+	if note.OwnerID != profileID {
+		c.JSON(403, gin.H{"error": "Only the owner can generate a share link"})
+		return
+	}
+	
 	token, err := helpers.GenerateLink()
 	if err != nil {
 		tx.Rollback()

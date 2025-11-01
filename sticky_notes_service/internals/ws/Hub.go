@@ -25,17 +25,26 @@ type Room struct {
 }
 
 type Hub struct {
-	rooms    map[string]*Room
-	handlers map[string]EventHandler
+	rooms         map[string]*Room
+	handlers      map[string]EventHandler
+	broadcastChan chan BroadcastRequest
 	sync.RWMutex
+}
+
+type BroadcastRequest struct {
+	StickyNoteID string
+	Sender       *Client
+	Payload      SaveStickyNotesRequest
 }
 
 func NewHub() *Hub {
 	h := &Hub{
-		rooms:    make(map[string]*Room),
-		handlers: make(map[string]EventHandler),
+		rooms:         make(map[string]*Room),
+		handlers:      make(map[string]EventHandler),
+		broadcastChan: make(chan BroadcastRequest, 1000),
 	}
 	h.setUpEventHandlers()
+	go h.runBroadcaster()
 	return h
 }
 
@@ -45,13 +54,38 @@ func NewRoom() *Room {
 	}
 }
 
+func (h *Hub) runBroadcaster() {
+	for req := range h.broadcastChan {
+		h.RLock()
+		room, exists := h.rooms[req.StickyNoteID]
+		h.RUnlock()
+
+		if !exists {
+			continue
+		}
+		room.RLock()
+		for c := range room.clients {
+			if c != req.Sender {
+				event := Event{
+					Type: EventUpdateStickyNote,
+					Data: SaveStickyNotesPayload(req.Payload),
+				}
+				if err := c.conn.WriteJSON(event); err != nil {
+					log.Printf("Broadcast error to client: %v", err)
+				}
+			}
+		}
+		room.RUnlock()
+	}
+}
+
 func (h *Hub) setUpEventHandlers() {
 	h.handlers[EventSaveStickyNote] = SaveNotes
 }
 
-func (m *Hub) routeEvent(event Event, client *Client) error {
+func (m *Hub) routeEvent(event Event, client *Client, hub *Hub) error {
 	if handler, ok := m.handlers[event.Type]; ok {
-		return handler(client, event)
+		return handler(client, event, hub)
 	}
 	return fmt.Errorf("no handler for event type: %s", event.Type)
 }
@@ -87,13 +121,12 @@ func (h *Hub) ServerWs(c *gin.Context) {
 
 	h.AddClient(stickyNoteID, client)
 
-	go client.ReadPump(stickyNoteID)
+	go client.ReadPump(stickyNoteID, h)
 }
 
 func (h *Hub) AddClient(stickyNoteID string, client *Client) {
 	h.Lock()
 	defer h.Unlock()
-	log.Printf("Adding new client")
 	room, exists := h.rooms[stickyNoteID]
 	if !exists {
 		room = NewRoom()
@@ -109,7 +142,6 @@ func (h *Hub) AddClient(stickyNoteID string, client *Client) {
 func (h *Hub) RemoveClient(stickyNoteID string, client *Client) {
 	h.Lock()
 	defer h.Unlock()
-	log.Printf("Removing client")
 	room, exists := h.rooms[stickyNoteID]
 	if exists {
 		room.Lock()
@@ -124,18 +156,26 @@ func (h *Hub) RemoveClient(stickyNoteID string, client *Client) {
 	}
 }
 
-func SaveNotes(client *Client, event Event) error {
+func SaveNotes(client *Client, event Event, hub *Hub) error {
 	profileID := client.profileID
 	saveRequest := SaveStickyNotesRequest{
 		StickyNoteID: event.Data.StickyNoteID,
 		Blocks:       event.Data.Blocks,
 	}
-
 	if err := SaveStickyNotesToDB(saveRequest, profileID); err != nil {
 		log.Printf("Error saving to database: %v", err)
 		return err
 	}
 
-	log.Printf("Successfully saved sticky note for user: %s", profileID.String())
+	select {
+	case hub.broadcastChan <- BroadcastRequest{
+		StickyNoteID: saveRequest.StickyNoteID,
+		Sender:       client,
+		Payload:      saveRequest,
+	}:
+	default:
+		log.Printf("Broadcast queue full — dropping event for %s", saveRequest.StickyNoteID)
+	}
+
 	return nil
 }

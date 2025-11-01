@@ -2,7 +2,9 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { BACKEND_STICKYNOTES_DOMAIN } from "../constant";
 import axios from "axios";
 import { StickyNoteTypes } from "@/app/types/StickyNotesTypes";
-import { Title } from "@radix-ui/react-alert-dialog";
+
+export const DEFAULT_NOTE_WIDTH = 360;
+export const DEFAULT_NOTE_HEIGHT = 300;
 
 export interface NotesState extends StickyNoteTypes {
   x: number;
@@ -26,30 +28,69 @@ const initialState: NotesSliceState = {
 
 const calculateGridPosition = (
   index: number,
-  noteWidth: number = 360,
-  noteHeight: number = 420
+  noteWidth: number = DEFAULT_NOTE_WIDTH,
+  noteHeight: number = DEFAULT_NOTE_HEIGHT
 ) => {
-  const padding = 20;
-  const startX = 50;
-  const startY = 50;
-  const sidebarWidth = 144;
-
   const windowWidth = typeof window !== "undefined" ? window.innerWidth : 1200;
+
+  let padding: number;
+  let startX: number;
+  let startY: number;
+
+  if (windowWidth < 640) {
+    padding = 0;
+    startX = 0;
+    startY = 20;
+  } else if (windowWidth < 768) {
+    padding = 10;
+    startX = 10;
+    startY = 30;
+  } else if (windowWidth < 1024) {
+    padding = 15;
+    startX = 25;
+    startY = 35;
+  } else {
+    padding = 20;
+    startX = 50;
+    startY = 40;
+  }
+
+  const sidebarWidth = windowWidth >= 768 ? 144 : 0; 
   const availableWidth = Math.max(
-    600,
+    300,
     windowWidth - sidebarWidth - startX - padding
   );
+
+  let responsiveNoteWidth = noteWidth;
+  let responsiveNoteHeight = noteHeight;
+
+  if (windowWidth < 640) {
+    responsiveNoteWidth = Math.min(DEFAULT_NOTE_WIDTH, windowWidth - 20);
+    responsiveNoteHeight = DEFAULT_NOTE_HEIGHT;
+  } else if (windowWidth < 768) {
+    responsiveNoteWidth = Math.min(DEFAULT_NOTE_WIDTH, (windowWidth - 40) / 2);
+    responsiveNoteHeight = DEFAULT_NOTE_HEIGHT;
+  } else if (windowWidth < 1024) {
+    responsiveNoteWidth = Math.min(
+      DEFAULT_NOTE_WIDTH,
+      (windowWidth - sidebarWidth - 60) / 2
+    );
+    responsiveNoteHeight = DEFAULT_NOTE_HEIGHT;
+  }
+
   const notesPerRow = Math.max(
     1,
-    Math.floor(availableWidth / (noteWidth + padding))
+    Math.floor(availableWidth / (responsiveNoteWidth + padding))
   );
 
   const row = Math.floor(index / notesPerRow);
   const col = index % notesPerRow;
 
   return {
-    x: startX + col * (noteWidth + padding),
-    y: startY + row * (noteHeight + padding),
+    x: startX + col * (responsiveNoteWidth + padding),
+    y: startY + row * (responsiveNoteHeight + padding),
+    width: responsiveNoteWidth,
+    height: responsiveNoteHeight,
   };
 };
 
@@ -81,8 +122,8 @@ const fetchNotes = async () => {
           ShareLink: backendNote.ShareLink,
           x: position.x,
           y: position.y,
-          width: 360,
-          height: 420,
+          width: position.width,
+          height: position.height,
           zIndex: 1000 + index,
           Content: backendNote.Content
             ? {
@@ -155,8 +196,8 @@ export const createStickyNote = createAsyncThunk(
           ShareLink: data.sticky_note?.ShareLink || null,
           x: position.x,
           y: position.y,
-          width: 360,
-          height: 420,
+          width: position.width,
+          height: position.height,
           zIndex: 1000,
           Content: data.sticky_note?.Content
             ? {
@@ -215,6 +256,8 @@ export const notesSlice = createSlice({
         const position = calculateGridPosition(index);
         note.x = position.x;
         note.y = position.y;
+        note.width = position.width;
+        note.height = position.height;
         note.zIndex = 1000 + index;
       });
     },
@@ -264,6 +307,8 @@ export const notesSlice = createSlice({
           const position = calculateGridPosition(index);
           note.x = position.x;
           note.y = position.y;
+          note.width = position.width;
+          note.height = position.height;
           note.zIndex = 1000 + index;
         });
         state.error = null;
@@ -278,6 +323,8 @@ export const notesSlice = createSlice({
           const position = calculateGridPosition(index);
           note.x = position.x;
           note.y = position.y;
+          note.width = position.width;
+          note.height = position.height;
           note.zIndex = 1000 + index;
         });
       })

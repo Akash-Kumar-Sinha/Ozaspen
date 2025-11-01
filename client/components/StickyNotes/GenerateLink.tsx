@@ -26,7 +26,7 @@ import {
 import axios from "axios";
 import { BACKEND_STICKYNOTES_DOMAIN } from "@/app/lib/constant";
 import gsap from "gsap";
-import { Access } from "@/app/types/StickyNotesTypes";
+import { Access, Role } from "@/app/types/StickyNotesTypes";
 
 interface ShareLinkResponse {
   Link: string;
@@ -53,9 +53,11 @@ interface DeleteResponse {
 const GenerateLink = ({
   NoteColors,
   ID,
+  role,
 }: {
   NoteColors: string;
   ID: string;
+  role: Role;
 }) => {
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [access, setAccess] = useState<Access>("private");
@@ -280,7 +282,7 @@ const GenerateLink = ({
               <span className="">
                 Generate a shareable link and control access permissions.
               </span>
-              {shareLink && (
+              {shareLink && role.toLowerCase() === "owner" && (
                 <div className="flex items-center gap-2">
                   {isRevoked ? (
                     <ActionButton
@@ -361,19 +363,21 @@ const GenerateLink = ({
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={changeAccess}
-                    disabled={isChangingAccess}
-                    className="px-3 py-1.5 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  >
-                    {isChangingAccess ? (
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                    ) : access === "public" ? (
-                      "Make Private"
-                    ) : (
-                      "Make Public"
-                    )}
-                  </button>
+                  {role.toLowerCase() === "owner" && (
+                    <button
+                      onClick={changeAccess}
+                      disabled={isChangingAccess}
+                      className="px-3 py-1.5 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {isChangingAccess ? (
+                        <RefreshCw className="h-3 w-3 animate-spin" />
+                      ) : access === "public" ? (
+                        "Make Private"
+                      ) : (
+                        "Make Public"
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -417,7 +421,6 @@ const GenerateLink = ({
                     </button>
                   </div>
                 </div>
-
 
                 {isRevoked && (
                   <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">

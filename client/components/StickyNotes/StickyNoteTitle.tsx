@@ -26,7 +26,6 @@ const StickyNoteTitle = ({
   const pencilRef = useRef<HTMLButtonElement>(null);
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("Only owneres can edit titles");
     if (role === "viewer") return;
     if (role === "editor") return;
     setIsEditingTitle(true);

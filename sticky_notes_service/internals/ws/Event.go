@@ -7,10 +7,11 @@ type Event struct {
 	Data SaveStickyNotesPayload `json:"data"`
 }
 
-type EventHandler func(client *Client, event Event) error
+type EventHandler func(client *Client, event Event, hub *Hub) error
 
 const (
-	EventSaveStickyNote = "save_sticky_note"
+	EventSaveStickyNote   = "save_sticky_note"
+	EventUpdateStickyNote = "update_sticky_note"
 )
 
 type SaveStickyNotesPayload struct {

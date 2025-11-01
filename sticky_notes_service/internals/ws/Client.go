@@ -26,7 +26,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, profileID uuid.UUID) *Client {
 	}
 }
 
-func (client *Client) ReadPump(stickyNoteID string) {
+func (client *Client) ReadPump(stickyNoteID string, hub *Hub) {
 	defer func() {
 		client.hub.RemoveClient(stickyNoteID, client)
 	}()
@@ -47,7 +47,7 @@ func (client *Client) ReadPump(stickyNoteID string) {
 				continue
 			}
 
-			if err := client.hub.routeEvent(req, client); err != nil {
+			if err := client.hub.routeEvent(req, client, hub); err != nil {
 				log.Printf("Error handling event: %v\n", err)
 			}
 		}

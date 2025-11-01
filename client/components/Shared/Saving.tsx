@@ -1,5 +1,5 @@
 import React from "react";
-import { Loader2, SaveAll } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Saving = ({
@@ -31,7 +31,7 @@ const Saving = ({
           }`}
         />
       ) : (
-        <SaveAll
+        <Check
           className={cn(
             "h-3.5 w-3.5",
             isDarkBackground ? "text-foreground" : "text-background",

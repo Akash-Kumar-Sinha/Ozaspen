@@ -3,6 +3,8 @@ import {
   updateNotePosition,
   updateNoteSize,
   bringNoteForward,
+  DEFAULT_NOTE_WIDTH,
+  DEFAULT_NOTE_HEIGHT,
 } from "../../app/lib/features/notesSlice";
 import { useAppDispatch, useAppSelector } from "../../app/lib/hooks";
 import { useCreateBlockNote } from "@blocknote/react";
@@ -19,7 +21,7 @@ import axios from "axios";
 import { RootState } from "@/app/lib/store";
 import { connect, getSocket } from "@/app/lib/features/socketSlice";
 
-import Headers from "./Headers";
+import Header from "./Header";
 
 const StickyNotes = memo(
   ({
@@ -34,7 +36,6 @@ const StickyNotes = memo(
     CreatedAt,
     Content,
   }: NotesState) => {
-    console.log("Rendering StickyNote ID:", ID);
     const dispatch = useAppDispatch();
     const isConnected = useAppSelector(
       (state: RootState) => state.socket.isConnected
@@ -47,8 +48,6 @@ const StickyNotes = memo(
           : undefined,
     });
     const noteRef = useRef<HTMLDivElement>(null);
-    const cornerTopLeftRef = useRef<HTMLDivElement>(null);
-    const cornerTopRightRef = useRef<HTMLDivElement>(null);
     const resizeHandleRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
@@ -63,24 +62,26 @@ const StickyNotes = memo(
     const sizeRef = useRef({ width: size.width, height: size.height });
     const [blocks, setBlocks] = useState<Block[]>(Content?.Blocks || []);
     const [isSaving, setIsSaving] = useState(false);
-    const [isAutoSaving, setIsAutoSaving] = useState(false);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const lastSavedBlocks = useRef<string>("");
+    const isReceivingUpdate = useRef(false);
+    const lastSaveTime = useRef<number>(0);
+    const MAX_SAVE_INTERVAL = 500;
 
     const getResponsiveDimensions = useCallback(() => {
       if (typeof window === "undefined")
-        return { minWidth: 250, minHeight: 280 };
+        return { minWidth: DEFAULT_NOTE_WIDTH, minHeight: DEFAULT_NOTE_HEIGHT };
 
       const screenWidth = window.innerWidth;
 
       if (screenWidth < 640) {
-        return { minWidth: 280, minHeight: 320 };
+        return { minWidth: DEFAULT_NOTE_WIDTH, minHeight: DEFAULT_NOTE_HEIGHT };
       } else if (screenWidth < 768) {
-        return { minWidth: 300, minHeight: 300 };
+        return { minWidth: DEFAULT_NOTE_WIDTH, minHeight: DEFAULT_NOTE_HEIGHT };
       } else if (screenWidth < 1024) {
-        return { minWidth: 320, minHeight: 320 };
+        return { minWidth: DEFAULT_NOTE_WIDTH, minHeight: DEFAULT_NOTE_HEIGHT };
       } else {
-        return { minWidth: 350, minHeight: 350 };
+        return { minWidth: DEFAULT_NOTE_WIDTH, minHeight: DEFAULT_NOTE_HEIGHT };
       }
     }, []);
 
@@ -95,6 +96,7 @@ const StickyNotes = memo(
 
     const autoSaveBlocks = useCallback(async () => {
       if (blocks.length === 0) return;
+      if (isReceivingUpdate.current) return;
 
       const socket = getSocket();
       if (!isConnected || !socket) return;
@@ -103,7 +105,9 @@ const StickyNotes = memo(
       if (currentBlocksString === lastSavedBlocks.current) return;
 
       try {
-        setIsAutoSaving(true);
+        setIsSaving(true);
+        lastSaveTime.current = Date.now();
+
         socket.send(
           JSON.stringify({
             type: "save_sticky_note",
@@ -115,17 +119,18 @@ const StickyNotes = memo(
         );
 
         lastSavedBlocks.current = currentBlocksString;
-        setTimeout(() => {
-          setIsAutoSaving(false);
-        }, 800);
       } catch (error) {
-        console.error("WebSocket auto-save failed:", error);
-        setIsAutoSaving(false);
+        console.error("Error auto-saving sticky note:", error);
+      } finally {
+        setTimeout(() => {
+          setIsSaving(false);
+        }, 300);
       }
     }, [blocks, ID, isConnected]);
 
     useEffect(() => {
       if (blocks.length === 0) return;
+      if (isReceivingUpdate.current) return;
 
       const socket = getSocket();
       if (!isConnected || !socket) return;
@@ -134,13 +139,21 @@ const StickyNotes = memo(
 
       if (currentBlocksString === lastSavedBlocks.current) return;
 
+      const now = Date.now();
+      const timeSinceLastSave = now - lastSaveTime.current;
+
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
 
-      saveTimeoutRef.current = setTimeout(() => {
+      if (timeSinceLastSave >= MAX_SAVE_INTERVAL) {
         autoSaveBlocks();
-      }, 2000);
+      } else {
+        const delay = Math.max(100, MAX_SAVE_INTERVAL - timeSinceLastSave);
+        saveTimeoutRef.current = setTimeout(() => {
+          autoSaveBlocks();
+        }, delay);
+      }
 
       return () => {
         if (saveTimeoutRef.current) {
@@ -228,6 +241,10 @@ const StickyNotes = memo(
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
+      if (typeof window !== "undefined" && window.innerWidth < 760) {
+        return;
+      }
+
       if (
         (e.target as HTMLElement).closest("button") ||
         (e.target as HTMLElement).closest(".bn-editor") ||
@@ -246,6 +263,10 @@ const StickyNotes = memo(
     };
 
     const handleTouchStart = (e: React.TouchEvent) => {
+      if (typeof window !== "undefined" && window.innerWidth < 760) {
+        return;
+      }
+
       if (
         (e.target as HTMLElement).closest("button") ||
         (e.target as HTMLElement).closest(".bn-editor") ||
@@ -441,6 +462,7 @@ const StickyNotes = memo(
 
     const handleResizeMouseDown = (e: React.MouseEvent) => {
       e.stopPropagation();
+      handleBringForward(e);
       setIsResizing(true);
       resizeStart.current = {
         x: e.clientX,
@@ -585,8 +607,6 @@ const StickyNotes = memo(
     const saveBlocks = useCallback(async () => {
       try {
         setIsSaving(true);
-        console.log("Manual save via HTTP for StickyNote ID:", ID);
-        console.log("Blocks to be saved:", blocks);
         await axios.post(
           `${BACKEND_STICKYNOTES_DOMAIN}/save_sticky_notes`,
           {
@@ -602,9 +622,8 @@ const StickyNotes = memo(
         );
 
         lastSavedBlocks.current = JSON.stringify(blocks);
-        console.log("Manual save successful for StickyNote ID:", ID);
       } catch (error) {
-        console.error("Manual save failed:", error);
+        console.error("Error auto-saving sticky note:", error);
       } finally {
         setIsSaving(false);
       }
@@ -641,87 +660,57 @@ const StickyNotes = memo(
             ease: "power3.out",
           }
         );
-
-        if (cornerTopLeftRef.current) {
-          timeline.fromTo(
-            cornerTopLeftRef.current,
-            { scale: 0, opacity: 0 },
-            {
-              scale: 1,
-              opacity: 0.15,
-              duration: 0.35,
-              ease: "back.out(1.7)",
-            },
-            "-=0.35"
-          );
-        }
-
-        if (cornerTopRightRef.current) {
-          timeline.fromTo(
-            cornerTopRightRef.current,
-            { scale: 0, opacity: 0 },
-            {
-              scale: 1,
-              opacity: 0.15,
-              duration: 0.35,
-              ease: "back.out(1.7)",
-            },
-            "-=0.25"
-          );
-        }
       }
     }, [ID]);
 
-    const handleNoteMouseEnter = () => {
-      if (!isDragging && !isResizing && !isMaximized) {
-        if (cornerTopLeftRef.current) {
-          gsap.to(cornerTopLeftRef.current, {
-            scale: 1.2,
-            opacity: 0.3,
-            duration: 0.25,
-            ease: "power2.out",
-          });
-        }
-        if (cornerTopRightRef.current) {
-          gsap.to(cornerTopRightRef.current, {
-            scale: 1.2,
-            opacity: 0.3,
-            duration: 0.25,
-            ease: "power2.out",
-            delay: 0.03,
-          });
-        }
-      }
-    };
+    const listenToSocketUpdates = useCallback(() => {
+      const socket = getSocket();
+      if (!socket) return;
 
-    const handleNoteMouseLeave = () => {
-      if (!isDragging && !isResizing) {
-        if (cornerTopLeftRef.current) {
-          gsap.to(cornerTopLeftRef.current, {
-            scale: 1,
-            opacity: 0.15,
-            duration: 0.25,
-            ease: "power2.out",
-          });
+      const handleMessage = (event: MessageEvent) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (
+            message.type === "update_sticky_note" &&
+            message.data.sticky_note_id === ID
+          ) {
+            const updatedBlocks = message.data.blocks;
+
+            isReceivingUpdate.current = true;
+
+            editor?.replaceBlocks(editor.document, updatedBlocks);
+            lastSavedBlocks.current = JSON.stringify(updatedBlocks);
+
+            setTimeout(() => {
+              isReceivingUpdate.current = false;
+            }, 100);
+          }
+        } catch (error) {
+          console.error("Error listening to socket updates:", error);
         }
-        if (cornerTopRightRef.current) {
-          gsap.to(cornerTopRightRef.current, {
-            scale: 1,
-            opacity: 0.15,
-            duration: 0.25,
-            ease: "power2.out",
-          });
-        }
-      }
-    };
+      };
+      socket.addEventListener("message", handleMessage);
+
+      return () => {
+        socket.removeEventListener("message", handleMessage);
+      };
+    }, [editor, ID]);
+
+    useEffect(() => {
+      listenToSocketUpdates();
+    }, [listenToSocketUpdates]);
 
     return (
       <div
         ref={noteRef}
         className={clsx(
-          "rounded-xl flex flex-col overflow-hidden group transition-all duration-300",
+          "rounded-xl flex flex-col overflow-hidden group transition-all duration-300 ",
           "backdrop-blur-sm sticky-note-scrollbar",
-          isMaximized ? "fixed z-[9999]" : "absolute",
+          isMaximized
+            ? "fixed z-[9999]"
+            : typeof window !== "undefined" && window.innerWidth < 1024
+            ? "relative"
+            : "absolute",
           isMaximized
             ? "shadow-2xl"
             : "shadow-lg hover:shadow-xl active:shadow-2xl",
@@ -732,32 +721,41 @@ const StickyNotes = memo(
             : "border-2 border-black/5"
         )}
         style={{
-          ...(!isMaximized && {
-            left: position.x,
-            top: position.y,
-            width: size.width,
-            height: size.height,
-          }),
+          ...(!isMaximized &&
+            typeof window !== "undefined" &&
+            window.innerWidth >= 1024 && {
+              left: position.x,
+              top: position.y,
+              width: size.width,
+              height: size.height,
+            }),
+          ...(typeof window !== "undefined" &&
+            window.innerWidth < 1024 &&
+            !isMaximized && {
+              width: "100%",
+              height: "auto",
+              minHeight: size.height,
+            }),
           ...(isMaximized && {
             position: "fixed",
             left: `${
               (typeof window !== "undefined" ? window.innerWidth : 1200) > 640
-                ? "5%"
+                ? "0%"
                 : "2.5%"
             }`,
             top: `${
               (typeof window !== "undefined" ? window.innerHeight : 800) > 640
-                ? "5%"
+                ? "0%"
                 : "2.5%"
             }`,
             right: `${
               (typeof window !== "undefined" ? window.innerWidth : 1200) > 640
-                ? "5%"
+                ? "0%"
                 : "2.5%"
             }`,
             bottom: `${
               (typeof window !== "undefined" ? window.innerHeight : 800) > 640
-                ? "5%"
+                ? "0%"
                 : "2.5%"
             }`,
             width: "auto",
@@ -771,78 +769,62 @@ const StickyNotes = memo(
             : undefined,
         }}
         onTouchStart={handleTouchStart}
-        onMouseEnter={handleNoteMouseEnter}
-        onMouseLeave={handleNoteMouseLeave}
         title="Drag to move, resize from bottom-right corner"
       >
-        <Headers
+        <Header
           isDarkBackground={isDarkBackground}
           isMaximized={isMaximized}
           CreatedAt={CreatedAt}
           NoteColors={NoteColors}
           isConnected={isConnected}
-          isAutoSaving={isAutoSaving}
           isSaving={isSaving}
           saveBlocks={saveBlocks}
           Title={Title}
           toggleMaximize={toggleMaximize}
           handleMouseDown={handleMouseDown}
+          handleBringForward={handleBringForward}
           ID={ID}
           Role="owner"
+          CanEdit={true}
+          page="sticky-note"
         />
-        <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar px-4 py-3">
+        <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar py-3">
           <Editor
             editor={editor}
             customTheme={customTheme}
             setBlock={setBlocks}
           />
         </main>
-        {!isMaximized && (
-          <div
-            ref={resizeHandleRef}
-            className={clsx(
-              "absolute bottom-0 right-0",
-              "w-10 h-10",
-              "cursor-nwse-resize touch-none",
-              "opacity-30 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300",
-              "bg-gradient-to-br from-transparent via-transparent",
-              isDarkBackground ? "to-white/30" : "to-black/30",
-              "hover:scale-110 active:scale-110",
-              "flex items-end justify-end p-1.5"
-            )}
-            onMouseDown={handleResizeMouseDown}
-            onTouchStart={handleResizeTouchStart}
-            aria-label="Resize note"
-          >
+        {!isMaximized &&
+          typeof window !== "undefined" &&
+          window.innerWidth >= 1024 && (
             <div
+              ref={resizeHandleRef}
               className={clsx(
-                "w-4 h-4 border-r-2 border-b-2 rounded-br-md",
-                isDarkBackground
-                  ? "border-white/50 hover:border-white/70"
-                  : "border-black/50 hover:border-black/70",
-                "transition-colors"
+                "absolute bottom-0 right-0",
+                "w-10 h-10",
+                "cursor-nwse-resize touch-none",
+                "opacity-30 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300",
+                "bg-gradient-to-br from-transparent via-transparent",
+                isDarkBackground ? "to-white/30" : "to-black/30",
+                "hover:scale-110 active:scale-110",
+                "flex items-end justify-end p-1.5"
               )}
-            />
-          </div>
-        )}
-        <div
-          ref={cornerTopLeftRef}
-          className={clsx(
-            "absolute top-0 left-0 rounded-br-full",
-            "w-3 h-3 transition-all duration-300",
-            isDarkBackground ? "bg-white" : "bg-black"
+              onMouseDown={handleResizeMouseDown}
+              onTouchStart={handleResizeTouchStart}
+              aria-label="Resize note"
+            >
+              <div
+                className={clsx(
+                  "w-4 h-4 border-r-2 border-b-2 rounded-br-md",
+                  isDarkBackground
+                    ? "border-white/50 hover:border-white/70"
+                    : "border-black/50 hover:border-black/70",
+                  "transition-colors"
+                )}
+              />
+            </div>
           )}
-          style={{ opacity: 0.15 }}
-        />
-        <div
-          ref={cornerTopRightRef}
-          className={clsx(
-            "absolute top-0 right-0 rounded-bl-full",
-            "w-3 h-3 transition-all duration-300",
-            isDarkBackground ? "bg-white" : "bg-black"
-          )}
-          style={{ opacity: 0.15 }}
-        />
       </div>
     );
   }

@@ -124,21 +124,19 @@ const Collaborator: React.FC<CollaboratorProps> = ({
 
   const handleAddUser = async (user: SearchUserTypes) => {
     if (!user) {
-      console.error("User parameter is null or undefined");
       return;
     }
 
     const profileId = user.ProfileID;
 
     if (!profileId) {
-      console.error("No valid profile ID found for user:", user);
       return;
     }
 
     setAddingUsers((prev) => new Set(prev.add(profileId)));
 
     try {
-      const response = await axios.put(
+      await axios.put(
         `${BACKEND_STICKYNOTES_DOMAIN}/add_collaborator`,
         {
           sticky_note_id: noteId,
@@ -153,15 +151,15 @@ const Collaborator: React.FC<CollaboratorProps> = ({
         }
       );
 
-      console.log("Collaborator added successfully:", response.data);
       setSearchUsers((prev) => prev.filter((c) => c.ProfileID !== profileId));
       fetchCollaborators();
     } catch (error) {
-      console.error("Error adding collaborator:", error);
       if (axios.isAxiosError(error) && error.response) {
-        console.error("Error response data:", error.response.data);
-        console.error("Error status:", error.response.status);
+        console.error("Error adding collaborator:", error.response.data);
+      }else{
+        console.error("Error adding collaborator:", error);
       }
+
     } finally {
       setAddingUsers((prev) => {
         const newSet = new Set(prev);
@@ -173,15 +171,9 @@ const Collaborator: React.FC<CollaboratorProps> = ({
 
   const handleRoleChange = async (username: string, newRole: Role) => {
     setUpdatingRoles((prev) => new Set(prev.add(username)));
-    console.log(
-      "Changing role for username:",
-      username,
-      "to newRole:",
-      newRole
-    );
 
     try {
-      const { data } = await axios.put(
+      await axios.put(
         `${BACKEND_STICKYNOTES_DOMAIN}/change_collaborator_role`,
         {
           sticky_note_id: noteId,
@@ -193,11 +185,9 @@ const Collaborator: React.FC<CollaboratorProps> = ({
         }
       );
 
-      console.log("Collaborator role updated successfully:", data);
-
       fetchCollaborators();
     } catch (error) {
-      console.error("Error updating role:", error);
+      console.error("Error changing collaborator role:", error);
     } finally {
       setUpdatingRoles((prev) => {
         const newSet = new Set(prev);
@@ -215,10 +205,9 @@ const Collaborator: React.FC<CollaboratorProps> = ({
           withCredentials: true,
         }
       );
-      console.log("Fetched collaborators:", response.data.Collaborators);
       setCollaborators(response.data.Collaborators || []);
-    } catch (error) {
-      console.error("Error fetching collaborators:", error);
+    } catch {
+      console.error("Error fetching collaborators");
       setCollaborators([]);
     }
   }, [noteId]);

@@ -11,17 +11,14 @@ import axios from "axios";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { clsx } from "clsx";
-import { Eye, Lock, Users, X } from "lucide-react";
+import { Lock } from "lucide-react";
 import LoadingStickyNotes from "@/components/StickyNotes/LoadingStickyNotes";
 import { useRouter } from "next/navigation";
 import { connect, getSocket } from "@/app/lib/features/socketSlice";
 import { RootState } from "@/app/lib/store";
 import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
 import { Block } from "@blocknote/core";
-import { ConnectionStatus } from "@/components/StickyNotes/ConnectionStatus";
-import StickyNoteTitle from "@/components/StickyNotes/StickyNoteTitle";
-import { AnimatePresence } from "framer-motion";
-import Collaborator from "@/components/StickyNotes/Collaborator";
+import Header from "@/components/StickyNotes/Header";
 
 interface PageProps {
   params: Promise<{
@@ -49,15 +46,16 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const noteRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLHeadingElement>(null);
-  const badgeRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [blocks, setBlocks] = useState<Block[]>(
     stickyNoteData?.Note.Content?.Blocks || []
   );
   const [isSaving, setIsSaving] = useState(false);
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedBlocks = useRef<string>("");
+  const isReceivingUpdate = useRef(false);
+  const lastSaveTime = useRef<number>(0);
+  const MAX_SAVE_INTERVAL = 500;
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -72,9 +70,8 @@ export default function SharedStickyNotePage({ params }: PageProps) {
       );
       setStickyNoteData(response.data);
       setError(null);
-    } catch (err) {
+    } catch {
       setError("Failed to load sticky note");
-      console.error("Error fetching sticky note:", err);
     } finally {
       setIsLoading(false);
     }
@@ -104,8 +101,8 @@ export default function SharedStickyNotePage({ params }: PageProps) {
             editor.document,
             stickyNoteData?.Note?.Content?.Blocks || []
           );
-        } catch (error) {
-          console.error("Error loading editor content:", error);
+        } catch {
+          console.error("Error loading sticky note content into editor");
         }
       };
       loadContent();
@@ -172,7 +169,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
         ? "rgba(147, 51, 234, 0.2)"
         : "rgba(0, 0, 0, 0.1)",
       border: borderColor,
-      sideMenu: cardColor,
+      sideMenu: isDarkBackground ? "#e4e4e7" : cardColor,
       highlightColors: {
         gray: { text: "#000000", background: "#e4e4e7" },
         brown: { text: "#000000", background: "#d4a574" },
@@ -190,53 +187,6 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     borderRadius: 4,
     fontFamily: "Inter, sans-serif",
   };
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && stickyNoteData) {
-      const root = document.documentElement;
-      root.style.setProperty("--note-bg-color", backgroundColor);
-      root.style.setProperty(
-        "--note-text-color",
-        isDarkBackground
-          ? foregroundColor
-          : isLightBackground
-          ? backgroundColorVar
-          : "#000000"
-      );
-      root.style.setProperty("--note-border-color", borderColor);
-      root.style.setProperty("--note-primary-color", primaryColor);
-      root.style.setProperty(
-        "--note-muted-color",
-        isDarkBackground ? mutedForegroundColor : "rgba(0, 0, 0, 0.6)"
-      );
-      root.style.setProperty(
-        "--note-badge-bg",
-        isDarkBackground
-          ? "rgba(255, 255, 255, 0.1)"
-          : isLightBackground
-          ? "rgba(0, 0, 0, 0.1)"
-          : "rgba(255, 255, 255, 0.2)"
-      );
-      root.style.setProperty(
-        "--note-header-border",
-        isDarkBackground ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
-      );
-      root.style.setProperty(
-        "--note-header-bg",
-        isDarkBackground ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.05)"
-      );
-    }
-  }, [
-    stickyNoteData,
-    backgroundColor,
-    isDarkBackground,
-    isLightBackground,
-    foregroundColor,
-    backgroundColorVar,
-    borderColor,
-    primaryColor,
-    mutedForegroundColor,
-  ]);
 
   useEffect(() => {
     if (noteRef.current && !isLoading && stickyNoteData) {
@@ -274,23 +224,6 @@ export default function SharedStickyNotePage({ params }: PageProps) {
             ease: "power3.out",
           },
           "-=0.5"
-        );
-      }
-
-      if (badgeRef.current) {
-        timeline.fromTo(
-          badgeRef.current,
-          {
-            scale: 0,
-            opacity: 0,
-          },
-          {
-            scale: 1,
-            opacity: 1,
-            duration: 0.5,
-            ease: "back.out(2)",
-          },
-          "-=0.4"
         );
       }
 
@@ -346,6 +279,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
 
   const autoSaveBlocks = useCallback(async () => {
     if (blocks.length === 0) return;
+    if (isReceivingUpdate.current) return;
 
     const socket = getSocket();
     if (!isConnected || !socket) return;
@@ -354,7 +288,9 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     if (currentBlocksString === lastSavedBlocks.current) return;
 
     try {
-      setIsAutoSaving(true);
+      setIsSaving(true);
+      lastSaveTime.current = Date.now();
+
       socket.send(
         JSON.stringify({
           type: "save_sticky_note",
@@ -364,20 +300,23 @@ export default function SharedStickyNotePage({ params }: PageProps) {
           },
         })
       );
-      console.log("WebSocket auto-save sent");
 
       lastSavedBlocks.current = currentBlocksString;
       setTimeout(() => {
-        setIsAutoSaving(false);
-      }, 800);
-    } catch (error) {
-      console.error("WebSocket auto-save failed:", error);
-      setIsAutoSaving(false);
+        setIsSaving(false);
+      }, 300);
+    } catch {
+      console.error("Error auto-saving sticky note");
+    } finally {
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 300);
     }
   }, [blocks, isConnected, stickyNoteData?.Note.ID]);
 
   useEffect(() => {
     if (blocks.length === 0) return;
+    if (isReceivingUpdate.current) return;
 
     const socket = getSocket();
     if (!isConnected || !socket) return;
@@ -386,13 +325,21 @@ export default function SharedStickyNotePage({ params }: PageProps) {
 
     if (currentBlocksString === lastSavedBlocks.current) return;
 
+    const now = Date.now();
+    const timeSinceLastSave = now - lastSaveTime.current;
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    saveTimeoutRef.current = setTimeout(() => {
+    if (timeSinceLastSave >= MAX_SAVE_INTERVAL) {
       autoSaveBlocks();
-    }, 2000);
+    } else {
+      const delay = Math.max(100, MAX_SAVE_INTERVAL - timeSinceLastSave);
+      saveTimeoutRef.current = setTimeout(() => {
+        autoSaveBlocks();
+      }, delay);
+    }
 
     return () => {
       if (saveTimeoutRef.current) {
@@ -400,6 +347,43 @@ export default function SharedStickyNotePage({ params }: PageProps) {
       }
     };
   }, [blocks, isConnected, autoSaveBlocks]);
+
+  const listenToSocketUpdates = useCallback(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (
+          message.type === "update_sticky_note" &&
+          message.data.sticky_note_id === stickyNoteData?.Note.ID
+        ) {
+          const updatedBlocks = message.data.blocks;
+
+          isReceivingUpdate.current = true;
+
+          editor?.replaceBlocks(editor.document, updatedBlocks);
+          lastSavedBlocks.current = JSON.stringify(updatedBlocks);
+
+          setTimeout(() => {
+            isReceivingUpdate.current = false;
+          }, 100);
+        }
+      } catch {
+        console.error("Error handling incoming WebSocket message");
+      }
+    };
+    socket.addEventListener("message", handleMessage);
+
+    return () => {
+      socket.removeEventListener("message", handleMessage);
+    };
+  }, [editor, stickyNoteData?.Note.ID]);
+
+  useEffect(() => {
+    listenToSocketUpdates();
+  }, [listenToSocketUpdates]);
 
   if (isLoading) {
     return (
@@ -434,25 +418,12 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     );
   }
 
-  const getRoleIcon = () => {
-    if (stickyNoteData.Role === "owner")
-      return <Users className="h-3.5 w-3.5" />;
-    if (stickyNoteData.CanEdit) return <Users className="h-3.5 w-3.5" />;
-    return <Eye className="h-3.5 w-3.5" />;
-  };
-
-  const getRoleText = () => {
-    if (stickyNoteData.Role === "owner") return "Owner";
-    if (stickyNoteData.CanEdit) return "Can Edit";
-    return "View Only";
-  };
-
   return (
     <div className="fixed inset-0 overflow-hidden z-[9999] bg-gradient-to-br from-background to-card">
       <div
         ref={noteRef}
         className={clsx(
-          "fixed inset-0 sm:inset-4 md:inset-8 lg:inset-12",
+          "fixed inset-0",
           "flex flex-col overflow-hidden",
           "rounded-none sm:rounded-xl md:rounded-2xl",
           "shadow-2xl backdrop-blur-sm",
@@ -482,78 +453,21 @@ export default function SharedStickyNotePage({ params }: PageProps) {
           )}
         />
 
-        <header
-          className={clsx(
-            "flex-shrink-0 px-4 sm:px-6 py-2.5 sm:py-3",
-            "border-b backdrop-blur-sm transition-colors duration-300",
-            "[border-color:var(--note-header-border)]",
-            "[background-color:var(--note-header-bg)]"
-          )}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <StickyNoteTitle
-              stickyNoteId={stickyNoteData.Note.ID}
-              title={stickyNoteData.Note.Title}
-              isDarkBackground={isDarkBackground}
-              role={stickyNoteData.Role}
-            />
-
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div
-                ref={badgeRef}
-                className={clsx(
-                  "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
-                  "transition-all duration-300",
-                  "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
-                )}
-              >
-                {getRoleIcon()}
-                <span className="hidden sm:inline">{getRoleText()}</span>
-              </div>
-              <AnimatePresence>
-                <Collaborator
-                  noteId={stickyNoteData.Note.ID}
-                  noteColor={stickyNoteData.Note.NoteColors}
-                  isDarkBackground={isDarkBackground}
-                  role={stickyNoteData.Role}
-                />
-              </AnimatePresence>
-
-              <ConnectionStatus
-                color={isConnected ? "green" : "red"}
-                autoSave={isAutoSaving}
-                noteColor={NoteColors}
-                isSaving={isSaving}
-              />
-
-              <button
-                ref={closeButtonRef}
-                onClick={handleClose}
-                className={clsx(
-                  "flex-shrink-0 p-1.5 rounded-lg transition-all duration-300",
-                  "hover:scale-110 active:scale-95",
-                  "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
-                  "[background-color:var(--note-badge-bg)] [color:var(--note-text-color)]"
-                )}
-                onMouseEnter={(e) => {
-                  gsap.to(e.currentTarget, {
-                    boxShadow: `0 0 20px 5px ${primaryColor}55`,
-                    duration: 0.3,
-                  });
-                }}
-                onMouseLeave={(e) => {
-                  gsap.to(e.currentTarget, {
-                    boxShadow: `0 0 0 0 ${primaryColor}`,
-                    duration: 0.3,
-                  });
-                }}
-                aria-label="Close sticky note"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </header>
+        <div className="col-span-12">
+          <Header
+            isDarkBackground={isDarkBackground}
+            NoteColors={stickyNoteData?.Note.NoteColors || "#9333ea"}
+            isConnected={isConnected}
+            isSaving={isSaving}
+            Title={stickyNoteData?.Note.Title || "Untitled"}
+            ID={stickyNoteData?.Note.ID || ""}
+            Role={stickyNoteData?.Role || "viewer"}
+            CanEdit={stickyNoteData?.CanEdit || false}
+            closeButtonRef={closeButtonRef}
+            handleClose={handleClose}
+            page="shared-sticky-note"
+          />
+        </div>
 
         <main className="flex-1 min-h-0 overflow-auto sticky-note-scrollbar">
           <div className="h-full">

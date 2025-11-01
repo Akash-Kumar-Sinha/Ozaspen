@@ -50,6 +50,7 @@ func SaveStickyNotesToDB(req SaveStickyNotesRequest, profileID uuid.UUID) error 
 	}
 
 	allowed, err := checkPermission(stickyNoteID, profileID)
+	fmt.Printf("ajklsdf")
 	if err != nil {
 		return fmt.Errorf("permission check failed: %v", err)
 	}
@@ -86,10 +87,13 @@ func SaveStickyNotesToDB(req SaveStickyNotesRequest, profileID uuid.UUID) error 
 }
 
 func checkPermission(stickyNoteID uuid.UUID, profileID uuid.UUID) (bool, error) {
-	if err := database.DB.Model(&models.StickyNote{}).Where("id = ? AND owner_id = ?", stickyNoteID, profileID).First(&models.StickyNote{}).Error; err != nil {
-		if err = database.DB.Model(&models.Collaborator{}).Where("sticky_note_id = ? AND profile_id = ?", stickyNoteID, profileID).First(&models.Collaborator{}).Error; err != nil {
-			return false, fmt.Errorf("sticky note not found or user unauthorized: %v", err)
-		}
+
+	if err := database.DB.
+		Where("sticky_note_id = ? AND profile_id = ? AND (role = ? OR role = ?)",
+			stickyNoteID, profileID, models.RoleEditor, models.RoleOwner).
+		First(&models.Collaborator{}).Error; err != nil {
+		return false, fmt.Errorf("sticky note not found or user unauthorized: %v", err)
 	}
+
 	return true, nil
 }
