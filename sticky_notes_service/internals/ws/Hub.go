@@ -34,7 +34,7 @@ type Hub struct {
 type BroadcastRequest struct {
 	StickyNoteID string
 	Sender       *Client
-	Payload      SaveStickyNotesRequest
+	Payload      SaveStickyNotesPayload
 }
 
 func NewHub() *Hub {
@@ -65,6 +65,7 @@ func (h *Hub) runBroadcaster() {
 		}
 		room.RLock()
 		for c := range room.clients {
+			fmt.Printf("Broadcasting to client in room\n")
 			if c != req.Sender {
 				event := Event{
 					Type: EventUpdateStickyNote,
@@ -80,7 +81,7 @@ func (h *Hub) runBroadcaster() {
 }
 
 func (h *Hub) setUpEventHandlers() {
-	h.handlers[EventSaveStickyNote] = SaveNotes
+	h.handlers[EventSaveStickyNote] = SaveAndBroadcastNotes
 }
 
 func (m *Hub) routeEvent(event Event, client *Client, hub *Hub) error {
@@ -154,28 +155,4 @@ func (h *Hub) RemoveClient(stickyNoteID string, client *Client) {
 			}
 		}
 	}
-}
-
-func SaveNotes(client *Client, event Event, hub *Hub) error {
-	profileID := client.profileID
-	saveRequest := SaveStickyNotesRequest{
-		StickyNoteID: event.Data.StickyNoteID,
-		Blocks:       event.Data.Blocks,
-	}
-	if err := SaveStickyNotesToDB(saveRequest, profileID); err != nil {
-		log.Printf("Error saving to database: %v", err)
-		return err
-	}
-
-	select {
-	case hub.broadcastChan <- BroadcastRequest{
-		StickyNoteID: saveRequest.StickyNoteID,
-		Sender:       client,
-		Payload:      saveRequest,
-	}:
-	default:
-		log.Printf("Broadcast queue full — dropping event for %s", saveRequest.StickyNoteID)
-	}
-
-	return nil
 }
