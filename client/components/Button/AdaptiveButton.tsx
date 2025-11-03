@@ -4,7 +4,6 @@ import {
   forwardRef,
   ReactNode,
   useRef,
-  useEffect,
 } from "react";
 import gsap from "gsap";
 
@@ -89,7 +88,6 @@ export const AdaptiveButton = forwardRef<
         const icon = buttonRef.current.querySelector("svg");
         if (icon) {
           gsap.to(icon, {
-            rotate: variant === "destructive" ? 90 : 0,
             scale: 1.1,
             duration: 0.3,
             ease: "back.out(2)",
