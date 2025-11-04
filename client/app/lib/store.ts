@@ -1,12 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import notesReducer from "./features/notesSlice";
 import socketReducer from "./features/socketSlice";
+import actionNoteReducer from "./features/actionNoteSlice";
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       notes: notesReducer,
       socket: socketReducer,
+      actionNote: actionNoteReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({

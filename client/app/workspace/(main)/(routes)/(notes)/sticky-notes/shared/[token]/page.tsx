@@ -1,24 +1,27 @@
 "use client";
 
-import { BACKEND_STICKYNOTES_DOMAIN } from "@/app/lib/constant";
-import { Role, StickyNoteTypes } from "@/app/types/StickyNotesTypes";
 import { colorMap } from "@/app/types/types";
 import Editor from "@/components/Shared/Editor";
 import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/mantine/style.css";
 import "@blocknote/core/fonts/inter.css";
-import axios from "axios";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { clsx } from "clsx";
 import { Lock } from "lucide-react";
 import LoadingStickyNotes from "@/components/StickyNotes/LoadingStickyNotes";
 import { useRouter } from "next/navigation";
-import { connect, getSocket } from "@/app/lib/features/socketSlice";
+import { connect } from "@/app/lib/features/socketSlice";
 import { RootState } from "@/app/lib/store";
 import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
 import { Block } from "@blocknote/core";
 import Header from "@/components/StickyNotes/Header";
+import {
+  autoSaveBlocks,
+  fetchStickyNotesUsingSharedToken,
+} from "@/app/lib/features/actionNoteSlice";
+import { useStickyNoteSocketListener } from "@/components/StickyNotes/useStickyNoteSocketListener";
+import { useCustomTheme } from "@/components/StickyNotes/CustomTheme";
 
 interface PageProps {
   params: Promise<{
@@ -26,56 +29,32 @@ interface PageProps {
   }>;
 }
 
-interface StickyNoteData {
-  CanEdit: boolean;
-  Note: StickyNoteTypes;
-  Role: Role;
-}
-
 export default function SharedStickyNotePage({ params }: PageProps) {
+  const { stickyNoteDetails, permission, isLoading, error, isSaving } =
+    useAppSelector((state) => state.actionNote);
+  const customTheme = useCustomTheme(stickyNoteDetails?.NoteColors ?? "black");
   const { token } = use(params);
   const dispatch = useAppDispatch();
   const isConnected = useAppSelector(
     (state: RootState) => state.socket.isConnected
   );
   const router = useRouter();
-  const [stickyNoteData, setStickyNoteData] = useState<StickyNoteData | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
   const noteRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLHeadingElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [blocks, setBlocks] = useState<Block[]>(
-    stickyNoteData?.Note.Content?.Blocks || []
+    stickyNoteDetails?.Content?.Blocks || []
   );
-  const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSavedBlocks = useRef<string>("");
   const isReceivingUpdate = useRef(false);
   const lastSaveTime = useRef<number>(0);
   const MAX_SAVE_INTERVAL = 500;
 
   const fetchData = useCallback(async () => {
     if (!token) return;
-
-    try {
-      setIsLoading(true);
-      const response = await axios.get(
-        `${BACKEND_STICKYNOTES_DOMAIN}/get_sticky_note_by_share_link/${token}`,
-        {
-          withCredentials: true,
-        }
-      );
-      setStickyNoteData(response.data);
-      setError(null);
-    } catch {
-      setError("Failed to load sticky note");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token]);
+    dispatch(fetchStickyNotesUsingSharedToken(token));
+  }, [token, dispatch]);
 
   useEffect(() => {
     fetchData();
@@ -83,23 +62,34 @@ export default function SharedStickyNotePage({ params }: PageProps) {
 
   const editor = useCreateBlockNote({
     initialContent:
-      stickyNoteData?.Note.Content?.Blocks &&
-      stickyNoteData.Note.Content.Blocks.length > 0
-        ? stickyNoteData.Note.Content.Blocks
+      stickyNoteDetails?.Content?.Blocks &&
+      stickyNoteDetails.Content.Blocks.length > 0
+        ? stickyNoteDetails.Content.Blocks
         : undefined,
   });
+
+  const { isReceivingUpdate: hookIsReceivingUpdate } =
+    useStickyNoteSocketListener({
+      stickyNoteId: stickyNoteDetails?.ID,
+      editor,
+      setBlocks,
+    });
+
+  useEffect(() => {
+    isReceivingUpdate.current = hookIsReceivingUpdate;
+  }, [hookIsReceivingUpdate]);
 
   useEffect(() => {
     if (
       editor &&
-      stickyNoteData?.Note.Content?.Blocks &&
-      stickyNoteData.Note.Content.Blocks.length > 0
+      stickyNoteDetails?.Content?.Blocks &&
+      stickyNoteDetails.Content.Blocks.length > 0
     ) {
       const loadContent = async () => {
         try {
           await editor.replaceBlocks(
             editor.document,
-            stickyNoteData?.Note?.Content?.Blocks || []
+            stickyNoteDetails?.Content?.Blocks || []
           );
         } catch {
           console.error("Error loading sticky note content into editor");
@@ -107,89 +97,14 @@ export default function SharedStickyNotePage({ params }: PageProps) {
       };
       loadContent();
     }
-  }, [stickyNoteData, editor]);
+  }, [stickyNoteDetails, editor]);
 
-  const NoteColors = stickyNoteData?.Note.NoteColors;
+  const NoteColors = stickyNoteDetails?.NoteColors;
   const backgroundColor = colorMap[NoteColors as keyof typeof colorMap];
   const isDarkBackground = NoteColors === "black";
-  const isLightBackground = NoteColors === "white";
-
-  const getCSSVariable = (variableName: string) => {
-    if (typeof window !== "undefined") {
-      return getComputedStyle(document.documentElement)
-        .getPropertyValue(variableName)
-        .trim();
-    }
-    return "";
-  };
-
-  const foregroundColor = getCSSVariable("--foreground") || "#ffffff";
-  const backgroundColorVar = getCSSVariable("--background") || "#000000";
-  const mutedForegroundColor =
-    getCSSVariable("--muted-foreground") || "#a1a1aa";
-  const primaryColor = getCSSVariable("--primary") || "#9333ea";
-  const cardColor = getCSSVariable("--card") || "#111111";
-  const borderColor = getCSSVariable("--border") || "#27272a";
-
-  const customTheme = {
-    colors: {
-      editor: {
-        text: isDarkBackground
-          ? foregroundColor
-          : isLightBackground
-          ? backgroundColorVar
-          : "#000000",
-        background: backgroundColor,
-      },
-      menu: {
-        text: foregroundColor,
-        background: cardColor,
-      },
-      tooltip: {
-        text: foregroundColor,
-        background: cardColor,
-      },
-      hovered: {
-        text: foregroundColor,
-        background: primaryColor,
-      },
-      selected: {
-        text: "#000000",
-        background: isDarkBackground
-          ? "rgba(147, 51, 234, 0.2)"
-          : "rgba(255, 255, 255, 0.2)",
-      },
-      disabled: {
-        text: mutedForegroundColor,
-        background: isDarkBackground
-          ? "rgba(0, 0, 0, 0.05)"
-          : "rgba(255, 255, 255, 0.05)",
-      },
-      shadow: isDarkBackground
-        ? "rgba(147, 51, 234, 0.2)"
-        : "rgba(0, 0, 0, 0.1)",
-      border: borderColor,
-      sideMenu: isDarkBackground ? "#e4e4e7" : cardColor,
-      highlightColors: {
-        gray: { text: "#000000", background: "#e4e4e7" },
-        brown: { text: "#000000", background: "#d4a574" },
-        red: { text: "#000000", background: "#fca5a5" },
-        orange: { text: "#000000", background: "#fdba74" },
-        yellow: { text: "#000000", background: "#fde047" },
-        green: { text: "#000000", background: "#86efac" },
-        blue: { text: "#000000", background: "#93c5fd" },
-        purple: { text: "#000000", background: "#c4b5fd" },
-        pink: { text: "#000000", background: "#f9a8d4" },
-        black: { text: foregroundColor, background: cardColor },
-        white: { text: "#000000", background: "#f8f8f8" },
-      },
-    },
-    borderRadius: 4,
-    fontFamily: "Inter, sans-serif",
-  };
 
   useEffect(() => {
-    if (noteRef.current && !isLoading && stickyNoteData) {
+    if (noteRef.current && stickyNoteDetails) {
       const timeline = gsap.timeline();
 
       timeline.fromTo(
@@ -246,7 +161,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
         );
       }
     }
-  }, [isLoading, stickyNoteData]);
+  }, [stickyNoteDetails]);
 
   const handleClose = () => {
     if (noteRef.current) {
@@ -267,9 +182,9 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   };
 
   const connectSockets = useCallback(() => {
-    if (!stickyNoteData) return;
-    dispatch(connect(stickyNoteData?.Note.ID));
-  }, [dispatch, stickyNoteData]);
+    if (!stickyNoteDetails) return;
+    dispatch(connect(stickyNoteDetails.ID));
+  }, [dispatch, stickyNoteDetails]);
 
   useEffect(() => {
     if (!isConnected) {
@@ -277,53 +192,10 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     }
   }, [isConnected, connectSockets]);
 
-  const autoSaveBlocks = useCallback(async () => {
-    if (blocks.length === 0) return;
-    if (isReceivingUpdate.current) return;
-
-    const socket = getSocket();
-    if (!isConnected || !socket) return;
-
-    const currentBlocksString = JSON.stringify(blocks);
-    if (currentBlocksString === lastSavedBlocks.current) return;
-
-    try {
-      setIsSaving(true);
-      lastSaveTime.current = Date.now();
-
-      socket.send(
-        JSON.stringify({
-          type: "save_sticky_note",
-          data: {
-            sticky_note_id: stickyNoteData?.Note.ID,
-            blocks: blocks,
-          },
-        })
-      );
-
-      lastSavedBlocks.current = currentBlocksString;
-      setTimeout(() => {
-        setIsSaving(false);
-      }, 300);
-    } catch {
-      console.error("Error auto-saving sticky note");
-    } finally {
-      setTimeout(() => {
-        setIsSaving(false);
-      }, 300);
-    }
-  }, [blocks, isConnected, stickyNoteData?.Note.ID]);
-
   useEffect(() => {
+    if (!stickyNoteDetails?.ID) return;
     if (blocks.length === 0) return;
     if (isReceivingUpdate.current) return;
-
-    const socket = getSocket();
-    if (!isConnected || !socket) return;
-
-    const currentBlocksString = JSON.stringify(blocks);
-
-    if (currentBlocksString === lastSavedBlocks.current) return;
 
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveTime.current;
@@ -333,11 +205,11 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     }
 
     if (timeSinceLastSave >= MAX_SAVE_INTERVAL) {
-      autoSaveBlocks();
+      dispatch(autoSaveBlocks({ blocks, ID: stickyNoteDetails?.ID }));
     } else {
       const delay = Math.max(100, MAX_SAVE_INTERVAL - timeSinceLastSave);
       saveTimeoutRef.current = setTimeout(() => {
-        autoSaveBlocks();
+        dispatch(autoSaveBlocks({ blocks, ID: stickyNoteDetails?.ID }));
       }, delay);
     }
 
@@ -346,44 +218,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [blocks, isConnected, autoSaveBlocks]);
-
-  const listenToSocketUpdates = useCallback(() => {
-    const socket = getSocket();
-    if (!socket) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const message = JSON.parse(event.data);
-        if (
-          message.type === "update_sticky_note" &&
-          message.data.sticky_note_id === stickyNoteData?.Note.ID
-        ) {
-          const updatedBlocks = message.data.blocks;
-
-          isReceivingUpdate.current = true;
-
-          editor?.replaceBlocks(editor.document, updatedBlocks);
-          lastSavedBlocks.current = JSON.stringify(updatedBlocks);
-
-          setTimeout(() => {
-            isReceivingUpdate.current = false;
-          }, 100);
-        }
-      } catch {
-        console.error("Error handling incoming WebSocket message");
-      }
-    };
-    socket.addEventListener("message", handleMessage);
-
-    return () => {
-      socket.removeEventListener("message", handleMessage);
-    };
-  }, [editor, stickyNoteData?.Note.ID]);
-
-  useEffect(() => {
-    listenToSocketUpdates();
-  }, [listenToSocketUpdates]);
+  }, [blocks, isConnected, dispatch, stickyNoteDetails?.ID]);
 
   if (isLoading) {
     return (
@@ -393,7 +228,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     );
   }
 
-  if (error || !stickyNoteData) {
+  if (error || !stickyNoteDetails) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center max-w-md px-6">
@@ -456,13 +291,13 @@ export default function SharedStickyNotePage({ params }: PageProps) {
         <div className="col-span-12">
           <Header
             isDarkBackground={isDarkBackground}
-            NoteColors={stickyNoteData?.Note.NoteColors || "#9333ea"}
+            NoteColors={stickyNoteDetails?.NoteColors || "#9333ea"}
             isConnected={isConnected}
             isSaving={isSaving}
-            Title={stickyNoteData?.Note.Title || "Untitled"}
-            ID={stickyNoteData?.Note.ID || ""}
-            Role={stickyNoteData?.Role || "viewer"}
-            CanEdit={stickyNoteData?.CanEdit || false}
+            Title={stickyNoteDetails?.Title || "Untitled"}
+            ID={stickyNoteDetails?.ID || ""}
+            Role={permission?.Role || "viewer"}
+            CanEdit={permission?.CanEdit || false}
             closeButtonRef={closeButtonRef}
             handleClose={handleClose}
             page="shared-sticky-note"
@@ -475,7 +310,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
               <Editor
                 editor={editor}
                 customTheme={customTheme}
-                editable={stickyNoteData.CanEdit}
+                editable={permission?.CanEdit}
                 setBlock={setBlocks}
               />
             )}

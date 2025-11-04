@@ -8,7 +8,7 @@ import {
 } from "@/app/lib/features/notesSlice";
 import { useAppDispatch, useAppSelector } from "@/app/lib/hooks";
 import { AnimatePresence } from "framer-motion";
-import {  useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import LoadingStickyNotes from "@/components/StickyNotes/LoadingStickyNotes";
 
 const Notes = () => {
