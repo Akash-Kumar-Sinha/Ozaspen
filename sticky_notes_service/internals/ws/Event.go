@@ -1,6 +1,6 @@
 package ws
 
-import "gorm.io/datatypes"
+import "encoding/json"
 
 type Event struct {
 	Type string                 `json:"type"`
@@ -15,6 +15,6 @@ const (
 )
 
 type SaveStickyNotesPayload struct {
-	StickyNoteID string         `json:"sticky_note_id" binding:"required"`
-	Blocks       datatypes.JSON `json:"blocks" binding:"required"`
+	StickyNoteID string          `json:"sticky_note_id" binding:"required"`
+	Blocks       json.RawMessage `json:"blocks" binding:"required"`
 }
