@@ -132,6 +132,21 @@ func (h *Hub) AddClient(stickyNoteID string, client *Client) {
 		room = NewRoom()
 		h.rooms[stickyNoteID] = room
 	}
+	blocks, err := LoadStickyNoteBlocksFromDB(stickyNoteID, client)
+	if err != nil {
+		log.Printf("Error loading sticky note blocks: %v", err)
+	} else {
+		initEvent := Event{
+			Type: EventUpdateStickyNote,
+			Data: SaveStickyNotesPayload{
+				StickyNoteID: stickyNoteID,
+				Blocks:       blocks,
+			},
+		}
+		if err := client.conn.WriteJSON(initEvent); err != nil {
+			log.Printf("Error sending init event to client: %v", err)
+		}
+	}
 	room.Lock()
 	defer room.Unlock()
 	room.clients[client] = true

@@ -35,7 +35,7 @@ func GetStickyNoteByShareLink(c *gin.Context) {
 	}
 
 	var note models.StickyNote
-	err = tx.Preload("Content").Preload("ShareLink").
+	err = tx.Preload("ShareLink").
 		Where("share_link_id = ?", link.ID).
 		First(&note).Error
 	if err != nil {

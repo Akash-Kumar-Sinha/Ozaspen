@@ -126,16 +126,6 @@ const fetchNotes = async () => {
           width: position.width,
           height: position.height,
           zIndex: 1000 + index,
-          Content: backendNote.Content
-            ? {
-                ID: backendNote.Content.ID,
-                CreatedAt: backendNote.Content.CreatedAt,
-                UpdatedAt: backendNote.Content.UpdatedAt,
-                DeletedAt: backendNote.Content.DeletedAt,
-                Blocks: backendNote.Content.Blocks || [],
-                Changes: backendNote.Content.Changes || [],
-              }
-            : undefined,
         };
       }
     );
