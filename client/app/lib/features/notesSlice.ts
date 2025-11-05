@@ -1,7 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { BACKEND_STICKYNOTES_DOMAIN } from "../constant";
 import axios from "axios";
-import { StickyNoteTypes } from "@/app/types/StickyNotesTypes";
+import {
+  LoadingErrorTypes,
+  StickyNoteTypes,
+} from "@/app/types/StickyNotesTypes";
 
 export const DEFAULT_NOTE_WIDTH = 360;
 export const DEFAULT_NOTE_HEIGHT = 300;
@@ -14,10 +17,8 @@ export interface NotesState extends StickyNoteTypes {
   zIndex: number;
 }
 
-interface NotesSliceState {
+interface NotesSliceState extends LoadingErrorTypes {
   notes: NotesState[];
-  isLoading: boolean;
-  error: string | null;
 }
 
 const initialState: NotesSliceState = {
@@ -55,7 +56,7 @@ const calculateGridPosition = (
     startY = 40;
   }
 
-  const sidebarWidth = windowWidth >= 768 ? 144 : 0; 
+  const sidebarWidth = windowWidth >= 768 ? 144 : 0;
   const availableWidth = Math.max(
     300,
     windowWidth - sidebarWidth - startX - padding

@@ -65,7 +65,6 @@ func (h *Hub) runBroadcaster() {
 		}
 		room.RLock()
 		for c := range room.clients {
-			fmt.Printf("Broadcasting to client in room\n")
 			if c != req.Sender {
 				event := Event{
 					Type: EventUpdateStickyNote,

@@ -1,14 +1,15 @@
 package savestickynotes
 
 import (
+	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gorm.io/datatypes"
 )
 
 type SaveStickyNotesRequest struct {
-	StickyNoteID string         `json:"sticky_note_id" binding:"required"`
-	Blocks       datatypes.JSON `json:"blocks" binding:"required"`
+	StickyNoteID string          `json:"sticky_note_id" binding:"required"`
+	Blocks       json.RawMessage `json:"blocks" binding:"required"`
 }
 
 func SaveStickyNotesApi(c *gin.Context) {

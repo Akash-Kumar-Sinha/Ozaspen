@@ -1,13 +1,11 @@
 package models
 
 import (
+	"encoding/json"
 	authmodels "sticky_notes_service/internals/models/auth_users.models"
 
 	"github.com/google/uuid"
-	"gorm.io/datatypes"
 )
-
-
 
 type StickyNote struct {
 	authmodels.GormModel
@@ -46,6 +44,6 @@ type Collaborator struct {
 
 type Content struct {
 	authmodels.GormModel
-	Changes ChangesList    `gorm:"type:jsonb;not null;default:'[]'" json:"Changes"`
-	Blocks  datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'" json:"Blocks"`
+	Changes ChangesList     `gorm:"type:jsonb;not null;default:'[]'" json:"Changes"`
+	Blocks  json.RawMessage `gorm:"type:jsonb;not null;default:'[]'" json:"Blocks"`
 }

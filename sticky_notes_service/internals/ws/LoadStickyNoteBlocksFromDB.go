@@ -1,16 +1,15 @@
 package ws
 
 import (
+	"encoding/json"
 	"fmt"
 	"sticky_notes_service/internals/database"
 	savestickynotes "sticky_notes_service/internals/handlers/SaveStickyNotes"
 	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
-
-	"gorm.io/datatypes"
 )
 
-func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) (datatypes.JSON, error) {
+func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) (json.RawMessage, error) {
 	stickyNoteUUID, err := helpers.ParseUuid(stickyNoteID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid sticky note ID: %v", err)

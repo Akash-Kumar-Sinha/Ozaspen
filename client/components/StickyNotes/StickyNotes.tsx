@@ -6,6 +6,7 @@ import {
   DEFAULT_NOTE_WIDTH,
   DEFAULT_NOTE_HEIGHT,
 } from "../../app/lib/features/notesSlice";
+import { primaryColor, borderColor } from "@/app/lib/constant";
 import { useAppDispatch, useAppSelector } from "../../app/lib/hooks";
 import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/mantine/style.css";
@@ -16,12 +17,12 @@ import { clsx } from "clsx";
 import Editor from "../Shared/Editor";
 import { colorMap } from "@/app/types/types";
 import { Block } from "@blocknote/core";
-import { BACKEND_STICKYNOTES_DOMAIN } from "@/app/lib/constant";
-import axios from "axios";
 import { RootState } from "@/app/lib/store";
-import { connect, getSocket } from "@/app/lib/features/socketSlice";
-
+import { connect } from "@/app/lib/features/socketSlice";
 import Header from "./Header";
+import { useStickyNoteSocketListener } from "./useStickyNoteSocketListener";
+import { useCustomTheme } from "./CustomTheme";
+import { autoSaveBlocks } from "@/app/lib/features/actionNoteSlice";
 
 const StickyNotes = memo(
   ({
@@ -37,10 +38,13 @@ const StickyNotes = memo(
     Content,
   }: NotesState) => {
     const dispatch = useAppDispatch();
+    const customTheme = useCustomTheme(NoteColors);
     const isConnected = useAppSelector(
       (state: RootState) => state.socket.isConnected
     );
-
+    const isSaving = useAppSelector(
+      (state: RootState) => state.actionNote.isSaving
+    );
     const editor = useCreateBlockNote({
       initialContent:
         Content?.Blocks && Content.Blocks.length > 0
@@ -64,9 +68,7 @@ const StickyNotes = memo(
     const resizeStart = useRef({ x: 0, y: 0, startWidth: 0, startHeight: 0 });
     const sizeRef = useRef({ width: size.width, height: size.height });
     const [blocks, setBlocks] = useState<Block[]>(Content?.Blocks || []);
-    const [isSaving, setIsSaving] = useState(false);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const lastSavedBlocks = useRef<string>("");
     const isReceivingUpdate = useRef(false);
     const lastSaveTime = useRef<number>(0);
     const MAX_SAVE_INTERVAL = 500;
@@ -97,50 +99,20 @@ const StickyNotes = memo(
       sizeRef.current = { width: size.width, height: size.height };
     }, [size.width, size.height]);
 
-    const autoSaveBlocks = useCallback(async () => {
-      if (blocks.length === 0) return;
-      if (isReceivingUpdate.current) return;
+    const { isReceivingUpdate: hookIsReceivingUpdate } =
+      useStickyNoteSocketListener({
+        stickyNoteId: ID,
+        editor,
+        setBlocks,
+      });
 
-      const socket = getSocket();
-      if (!isConnected || !socket) return;
-
-      const currentBlocksString = JSON.stringify(blocks);
-      if (currentBlocksString === lastSavedBlocks.current) return;
-
-      try {
-        setIsSaving(true);
-        lastSaveTime.current = Date.now();
-
-        socket.send(
-          JSON.stringify({
-            type: "save_sticky_note",
-            data: {
-              sticky_note_id: ID,
-              blocks: blocks,
-            },
-          })
-        );
-
-        lastSavedBlocks.current = currentBlocksString;
-      } catch (error) {
-        console.error("Error auto-saving sticky note:", error);
-      } finally {
-        setTimeout(() => {
-          setIsSaving(false);
-        }, 300);
-      }
-    }, [blocks, ID, isConnected]);
+    useEffect(() => {
+      isReceivingUpdate.current = hookIsReceivingUpdate;
+    }, [hookIsReceivingUpdate]);
 
     useEffect(() => {
       if (blocks.length === 0) return;
       if (isReceivingUpdate.current) return;
-
-      const socket = getSocket();
-      if (!isConnected || !socket) return;
-
-      const currentBlocksString = JSON.stringify(blocks);
-
-      if (currentBlocksString === lastSavedBlocks.current) return;
 
       const now = Date.now();
       const timeSinceLastSave = now - lastSaveTime.current;
@@ -150,11 +122,11 @@ const StickyNotes = memo(
       }
 
       if (timeSinceLastSave >= MAX_SAVE_INTERVAL) {
-        autoSaveBlocks();
+        dispatch(autoSaveBlocks({ blocks, ID }));
       } else {
         const delay = Math.max(100, MAX_SAVE_INTERVAL - timeSinceLastSave);
         saveTimeoutRef.current = setTimeout(() => {
-          autoSaveBlocks();
+          dispatch(autoSaveBlocks({ blocks, ID }));
         }, delay);
       }
 
@@ -163,85 +135,9 @@ const StickyNotes = memo(
           clearTimeout(saveTimeoutRef.current);
         }
       };
-    }, [blocks, ID, isConnected, autoSaveBlocks]);
+    }, [blocks, isConnected, dispatch, ID]);
 
-    const backgroundColor = colorMap[NoteColors as keyof typeof colorMap];
     const isDarkBackground = NoteColors === "black";
-    const isLightBackground = NoteColors === "white";
-
-    const getCSSVariable = (variableName: string) => {
-      if (typeof window !== "undefined") {
-        return getComputedStyle(document.documentElement)
-          .getPropertyValue(variableName)
-          .trim();
-      }
-      return "";
-    };
-
-    const foregroundColor = getCSSVariable("--foreground") || "#ffffff";
-    const backgroundColorVar = getCSSVariable("--background") || "#000000";
-    const mutedForegroundColor =
-      getCSSVariable("--muted-foreground") || "#a1a1aa";
-    const primaryColor = getCSSVariable("--primary") || "#9333ea";
-    const cardColor = getCSSVariable("--card") || "#111111";
-    const borderColor = getCSSVariable("--border") || "#27272a";
-
-    const customTheme = {
-      colors: {
-        editor: {
-          text: isDarkBackground
-            ? foregroundColor
-            : isLightBackground
-            ? backgroundColorVar
-            : "#000000",
-          background: backgroundColor,
-        },
-        menu: {
-          text: foregroundColor,
-          background: cardColor,
-        },
-        tooltip: {
-          text: foregroundColor,
-          background: cardColor,
-        },
-        hovered: {
-          text: foregroundColor,
-          background: primaryColor,
-        },
-        selected: {
-          text: "#000000",
-          background: isDarkBackground
-            ? "rgba(147, 51, 234, 0.2)"
-            : "rgba(255, 255, 255, 0.2)",
-        },
-        disabled: {
-          text: mutedForegroundColor,
-          background: isDarkBackground
-            ? "rgba(0, 0, 0, 0.05)"
-            : "rgba(255, 255, 255, 0.05)",
-        },
-        shadow: isDarkBackground
-          ? "rgba(147, 51, 234, 0.2)"
-          : "rgba(0, 0, 0, 0.1)",
-        border: borderColor,
-        sideMenu: isDarkBackground ? "#e4e4e7" : cardColor,
-        highlightColors: {
-          gray: { text: "#000000", background: "#e4e4e7" },
-          brown: { text: "#000000", background: "#d4a574" },
-          red: { text: "#000000", background: "#fca5a5" },
-          orange: { text: "#000000", background: "#fdba74" },
-          yellow: { text: "#000000", background: "#fde047" },
-          green: { text: "#000000", background: "#86efac" },
-          blue: { text: "#000000", background: "#93c5fd" },
-          purple: { text: "#000000", background: "#c4b5fd" },
-          pink: { text: "#000000", background: "#f9a8d4" },
-          black: { text: foregroundColor, background: cardColor },
-          white: { text: "#000000", background: "#f8f8f8" },
-        },
-      },
-      borderRadius: 4,
-      fontFamily: "Inter, sans-serif",
-    };
 
     const handleMouseDown = (e: React.MouseEvent) => {
       if (typeof window !== "undefined" && window.innerWidth < 760) {
@@ -607,31 +503,6 @@ const StickyNotes = memo(
       }
     };
 
-    const saveBlocks = useCallback(async () => {
-      try {
-        setIsSaving(true);
-        await axios.post(
-          `${BACKEND_STICKYNOTES_DOMAIN}/save_sticky_notes`,
-          {
-            sticky_note_id: ID,
-            blocks: blocks,
-          },
-          {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        lastSavedBlocks.current = JSON.stringify(blocks);
-      } catch (error) {
-        console.error("Error auto-saving sticky note:", error);
-      } finally {
-        setIsSaving(false);
-      }
-    }, [blocks, ID]);
-
     const connectSockets = useCallback(() => {
       dispatch(connect(ID));
     }, [ID, dispatch]);
@@ -665,43 +536,6 @@ const StickyNotes = memo(
         );
       }
     }, [ID]);
-
-    const listenToSocketUpdates = useCallback(() => {
-      const socket = getSocket();
-      if (!socket) return;
-
-      const handleMessage = (event: MessageEvent) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (
-            message.type === "update_sticky_note" &&
-            message.data.sticky_note_id === ID
-          ) {
-            const updatedBlocks = message.data.blocks;
-
-            isReceivingUpdate.current = true;
-
-            editor?.replaceBlocks(editor.document, updatedBlocks);
-            lastSavedBlocks.current = JSON.stringify(updatedBlocks);
-
-            setTimeout(() => {
-              isReceivingUpdate.current = false;
-            }, 100);
-          }
-        } catch (error) {
-          console.error("Error listening to socket updates:", error);
-        }
-      };
-      socket.addEventListener("message", handleMessage);
-
-      return () => {
-        socket.removeEventListener("message", handleMessage);
-      };
-    }, [editor, ID]);
-
-    useEffect(() => {
-      listenToSocketUpdates();
-    }, [listenToSocketUpdates]);
 
     return (
       <div
@@ -781,7 +615,6 @@ const StickyNotes = memo(
           NoteColors={NoteColors}
           isConnected={isConnected}
           isSaving={isSaving}
-          saveBlocks={saveBlocks}
           Title={Title}
           toggleMaximize={toggleMaximize}
           handleMouseDown={handleMouseDown}

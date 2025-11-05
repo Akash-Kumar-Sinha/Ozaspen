@@ -1,13 +1,13 @@
 package savestickynotes
 
 import (
+	"encoding/json"
 	"fmt"
 	"sticky_notes_service/internals/database"
 	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
 
 	"github.com/google/uuid"
-	"gorm.io/datatypes"
 )
 
 func SaveStickyNotesToDB(req SaveStickyNotesRequest, profileID uuid.UUID) error {
@@ -31,7 +31,7 @@ func SaveStickyNotesToDB(req SaveStickyNotesRequest, profileID uuid.UUID) error 
 
 	if stickyNote.Content == nil {
 		newContent := models.Content{
-			Blocks: datatypes.JSON(req.Blocks),
+			Blocks: json.RawMessage(req.Blocks),
 		}
 		if err := database.DB.Create(&newContent).Error; err != nil {
 			return fmt.Errorf("failed to create content: %v", err)
@@ -44,7 +44,7 @@ func SaveStickyNotesToDB(req SaveStickyNotesRequest, profileID uuid.UUID) error 
 		return nil
 	}
 
-	stickyNote.Content.Blocks = datatypes.JSON(req.Blocks)
+	stickyNote.Content.Blocks = json.RawMessage(req.Blocks)
 	if err := database.DB.Save(stickyNote.Content).Error; err != nil {
 		return fmt.Errorf("failed to save content: %v", err)
 	}

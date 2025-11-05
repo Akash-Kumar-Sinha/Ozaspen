@@ -36,11 +36,16 @@ export interface Collaborator extends GormModel {
 
 export interface StickyNoteTypes extends GormModel {
   OwnerID: string;
-  Owner: Profile;
+  Owner?: Profile;
   Title: string;
   NoteColors: string;
   ContentID?: string;
   Content?: EditorContent;
   ShareLinkID?: string;
   ShareLink?: ShareLink;
+}
+
+export interface LoadingErrorTypes {
+  isLoading: boolean;
+  error: string | null;
 }

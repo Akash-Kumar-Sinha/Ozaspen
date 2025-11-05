@@ -64,7 +64,7 @@ func GetStickyNoteByShareLink(c *gin.Context) {
 	tx.Commit()
 
 	c.JSON(http.StatusOK, gin.H{
-		"Note":    note,
+		"stickyNoteDetails":    note,
 		"Role":    userRole,
 		"CanEdit": canEdit,
 	})
