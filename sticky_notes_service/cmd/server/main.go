@@ -23,8 +23,10 @@ func main() {
 		port = "8080"
 	}
 
+	frontendDomain := os.Getenv("FRONTEND_DOMAIN")
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{frontendDomain},
 		AllowMethods:     []string{"GET", "POST", "OPTIONS", "DELETE", "PUT"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,

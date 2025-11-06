@@ -55,7 +55,7 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	frontendURL := os.Getenv("FRONTEND_URL")
+	frontendURL := os.Getenv("FRONTEND_DOMAIN")
 	if frontendURL == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Frontend URL not configured"})
 		return

@@ -23,11 +23,14 @@ func main() {
 		PORT = "8000"
 	}
 
+	frontendDomain := os.Getenv("FRONTEND_DOMAIN")
+	stickyNoteServiceDomain := os.Getenv("BACKEND_STICKY_NOTE_SERVICE_DOMAIN")
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"}, // frontend URL
+		AllowOrigins:     []string{frontendDomain, stickyNoteServiceDomain},
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true, // crucial for HttpOnly cookies
+		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 	router.GET("/", func(c *gin.Context) {
