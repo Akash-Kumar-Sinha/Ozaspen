@@ -43,9 +43,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   const noteRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLHeadingElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const [blocks, setBlocks] = useState<Block[]>(
-    stickyNoteDetails?.Content?.Blocks || []
-  );
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isReceivingUpdate = useRef(false);
   const lastSaveTime = useRef<number>(0);
@@ -60,13 +58,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     fetchData();
   }, [fetchData]);
 
-  const editor = useCreateBlockNote({
-    initialContent:
-      stickyNoteDetails?.Content?.Blocks &&
-      stickyNoteDetails.Content.Blocks.length > 0
-        ? stickyNoteDetails.Content.Blocks
-        : undefined,
-  });
+  const editor = useCreateBlockNote();
 
   const { isReceivingUpdate: hookIsReceivingUpdate } =
     useStickyNoteSocketListener({
@@ -78,26 +70,6 @@ export default function SharedStickyNotePage({ params }: PageProps) {
   useEffect(() => {
     isReceivingUpdate.current = hookIsReceivingUpdate;
   }, [hookIsReceivingUpdate]);
-
-  useEffect(() => {
-    if (
-      editor &&
-      stickyNoteDetails?.Content?.Blocks &&
-      stickyNoteDetails.Content.Blocks.length > 0
-    ) {
-      const loadContent = async () => {
-        try {
-          await editor.replaceBlocks(
-            editor.document,
-            stickyNoteDetails?.Content?.Blocks || []
-          );
-        } catch {
-          console.error("Error loading sticky note content into editor");
-        }
-      };
-      loadContent();
-    }
-  }, [stickyNoteDetails, editor]);
 
   const NoteColors = stickyNoteDetails?.NoteColors;
   const backgroundColor = colorMap[NoteColors as keyof typeof colorMap];

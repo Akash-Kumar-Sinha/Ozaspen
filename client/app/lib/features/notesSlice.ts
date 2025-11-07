@@ -5,6 +5,7 @@ import {
   LoadingErrorTypes,
   StickyNoteTypes,
 } from "@/app/types/StickyNotesTypes";
+import { Block } from "@blocknote/core";
 
 export const DEFAULT_NOTE_WIDTH = 360;
 export const DEFAULT_NOTE_HEIGHT = 300;
@@ -126,16 +127,6 @@ const fetchNotes = async () => {
           width: position.width,
           height: position.height,
           zIndex: 1000 + index,
-          Content: backendNote.Content
-            ? {
-                ID: backendNote.Content.ID,
-                CreatedAt: backendNote.Content.CreatedAt,
-                UpdatedAt: backendNote.Content.UpdatedAt,
-                DeletedAt: backendNote.Content.DeletedAt,
-                Blocks: backendNote.Content.Blocks || [],
-                Changes: backendNote.Content.Changes || [],
-              }
-            : undefined,
         };
       }
     );
@@ -156,11 +147,17 @@ export const fetchStickyNotes = createAsyncThunk(
 
 export const createStickyNote = createAsyncThunk(
   "notes/createNote",
-  async (noteData: { color: string }) => {
+  async ({
+    noteData,
+    blocks,
+  }: {
+    noteData: { color: string };
+    blocks: Block[];
+  }) => {
     try {
       const { data } = await axios.post(
         `${BACKEND_STICKYNOTES_DOMAIN}/create_new_sticky_note`,
-        { note_colors: noteData.color },
+        { note_colors: noteData.color, blocks: blocks },
         {
           withCredentials: true,
           headers: {
@@ -200,16 +197,6 @@ export const createStickyNote = createAsyncThunk(
           width: position.width,
           height: position.height,
           zIndex: 1000,
-          Content: data.sticky_note?.Content
-            ? {
-                ID: data.sticky_note.Content.ID,
-                CreatedAt: data.sticky_note.Content.CreatedAt || "",
-                UpdatedAt: data.sticky_note.Content.UpdatedAt || "",
-                DeletedAt: data.sticky_note.Content.DeletedAt || null,
-                Blocks: data.sticky_note.Content.Blocks || [],
-                Changes: data.sticky_note.Content.Changes || [],
-              }
-            : undefined,
         };
       } else {
         throw new Error(data.message || "Failed to create sticky note");

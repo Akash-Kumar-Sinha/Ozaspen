@@ -37,9 +37,9 @@ func GenerateShareLink(c *gin.Context) {
 	if note.ShareLinkID != nil {
 		var existingLink models.ShareLink
 		if err := tx.Where("id = ?", *note.ShareLinkID).First(&existingLink).Error; err == nil {
-			frontendURL := os.Getenv("FRONTEND_URL")
+			frontendURL := os.Getenv("FRONTEND_DOMAIN")
 			if frontendURL == "" {
-				c.JSON(500, gin.H{"error": "FRONTEND_URL not set in environment"})
+				c.JSON(500, gin.H{"error": "FRONTEND_DOMAIN not set in environment"})
 				return
 			}
 			link := fmt.Sprintf("%s/workspace/sticky-notes/shared/%s", frontendURL, existingLink.Token)
@@ -88,9 +88,9 @@ func GenerateShareLink(c *gin.Context) {
 		return
 	}
 
-	frontendURL := os.Getenv("FRONTEND_URL")
+	frontendURL := os.Getenv("FRONTEND_DOMAIN")
 	if frontendURL == "" {
-		c.JSON(500, gin.H{"error": "FRONTEND_URL not set in environment"})
+		c.JSON(500, gin.H{"error": "FRONTEND_DOMAIN not set in environment"})
 		return
 	}
 

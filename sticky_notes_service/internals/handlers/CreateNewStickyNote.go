@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"sticky_notes_service/internals/database"
 	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
@@ -9,7 +10,8 @@ import (
 )
 
 type CreateNewStickyNoteRequest struct {
-	NoteColors string `json:"note_colors" binding:"required"`
+	NoteColors string          `json:"note_colors" binding:"required"`
+	Blocks     json.RawMessage `json:"blocks" binding:"required"`
 }
 
 func CreateNewStickyNote(c *gin.Context) {
@@ -29,7 +31,7 @@ func CreateNewStickyNote(c *gin.Context) {
 	}()
 
 	content := models.Content{
-		Blocks:  []byte("{}"),
+		Blocks:  req.Blocks,
 		Changes: models.ChangesList{},
 	}
 

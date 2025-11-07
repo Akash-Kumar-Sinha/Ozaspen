@@ -35,7 +35,6 @@ const StickyNotes = memo(
     height,
     zIndex,
     CreatedAt,
-    Content,
   }: NotesState) => {
     const dispatch = useAppDispatch();
     const customTheme = useCustomTheme(NoteColors);
@@ -46,10 +45,6 @@ const StickyNotes = memo(
       (state: RootState) => state.actionNote.isSaving
     );
     const editor = useCreateBlockNote({
-      initialContent:
-        Content?.Blocks && Content.Blocks.length > 0
-          ? Content.Blocks
-          : undefined,
       placeholders: {
         emptyDocument: "Start typing..",
       },
@@ -67,7 +62,7 @@ const StickyNotes = memo(
     const dragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 });
     const resizeStart = useRef({ x: 0, y: 0, startWidth: 0, startHeight: 0 });
     const sizeRef = useRef({ width: size.width, height: size.height });
-    const [blocks, setBlocks] = useState<Block[]>(Content?.Blocks || []);
+    const [blocks, setBlocks] = useState<Block[]>([]);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isReceivingUpdate = useRef(false);
     const lastSaveTime = useRef<number>(0);

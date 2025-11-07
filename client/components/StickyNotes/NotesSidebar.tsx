@@ -7,6 +7,7 @@ import { createStickyNote } from "../../app/lib/features/notesSlice";
 import { useAppDispatch } from "../../app/lib/hooks";
 import UserProfile from "../Profiles/UserProfile";
 import { colorMap } from "@/app/types/types";
+import { useCreateBlockNote } from "@blocknote/react";
 
 interface ColorSwatchProps {
   onClick: () => void;
@@ -89,10 +90,11 @@ const NotesSidebar = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  const editor = useCreateBlockNote();
   const handleAddNote = (color: keyof typeof colorMap) => {
     setIsCreating(true);
     setSelectedColor(color);
-    dispatch(createStickyNote({ color }));
+    dispatch(createStickyNote({ noteData: { color }, blocks: editor.document }));
     setTimeout(() => {
       setIsCreating(false);
       setSelectedColor(null);
