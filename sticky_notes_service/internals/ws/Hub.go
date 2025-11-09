@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,6 +22,7 @@ var upgrader = websocket.Upgrader{
 
 type Room struct {
 	clients ClientLists
+	blocks  json.RawMessage
 	sync.RWMutex
 }
 
@@ -48,9 +50,10 @@ func NewHub() *Hub {
 	return h
 }
 
-func NewRoom() *Room {
+func NewRoom(blocks json.RawMessage) *Room {
 	return &Room{
 		clients: make(ClientLists),
+		blocks:  blocks,
 	}
 }
 
@@ -128,25 +131,25 @@ func (h *Hub) AddClient(stickyNoteID string, client *Client) {
 	h.Lock()
 	defer h.Unlock()
 	room, exists := h.rooms[stickyNoteID]
-	if !exists {
-		room = NewRoom()
-		h.rooms[stickyNoteID] = room
-	}
 	blocks, err := LoadStickyNoteBlocksFromDB(stickyNoteID, client)
 	if err != nil {
 		log.Printf("Error loading sticky note blocks: %v", err)
-	} else {
-		initEvent := Event{
-			Type: EventUpdateStickyNote,
-			Data: SaveStickyNotesPayload{
-				StickyNoteID: stickyNoteID,
-				Blocks:       blocks,
-			},
-		}
-		if err := client.conn.WriteJSON(initEvent); err != nil {
-			log.Printf("Error sending init event to client: %v", err)
-		}
 	}
+	if !exists {
+		room = NewRoom(blocks)
+		h.rooms[stickyNoteID] = room
+	}
+	initEvent := Event{
+		Type: EventUpdateStickyNote,
+		Data: SaveStickyNotesPayload{
+			StickyNoteID: stickyNoteID,
+			Blocks:       blocks,
+		},
+	}
+	if err := client.conn.WriteJSON(initEvent); err != nil {
+		log.Printf("Error sending init event to client: %v", err)
+	}
+
 	room.Lock()
 	defer room.Unlock()
 	room.clients[client] = true
