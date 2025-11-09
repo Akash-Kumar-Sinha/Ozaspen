@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"sticky_notes_service/internals/database"
 	"sticky_notes_service/internals/helpers"
 	"sticky_notes_service/internals/models"
@@ -10,8 +9,10 @@ import (
 )
 
 type CreateNewStickyNoteRequest struct {
-	NoteColors string          `json:"note_colors" binding:"required"`
-	Blocks     json.RawMessage `json:"blocks" binding:"required"`
+	NoteColors string       `json:"note_colors" binding:"required"`
+	ID         string       `json:"id" binding:"required"`
+	Type       string       `json:"type" binding:"required"`
+	Props      models.Props `json:"props" binding:"required"`
 }
 
 func CreateNewStickyNote(c *gin.Context) {
@@ -30,21 +31,27 @@ func CreateNewStickyNote(c *gin.Context) {
 		}
 	}()
 
-	content := models.Content{
-		Blocks:  req.Blocks,
+	blocksContent := models.BlocksContent{
+		BlocksContentDetails: models.Blocks{
+			{
+				ID:    req.ID,
+				Type:  req.Type,
+				Props: req.Props,
+			},
+		},
 		Changes: models.ChangesList{},
 	}
 
-	if err := tx.Create(&content).Error; err != nil {
+	if err := tx.Create(&blocksContent).Error; err != nil {
 		tx.Rollback()
 		c.JSON(500, gin.H{"error": "Failed to create sticky note content"})
 		return
 	}
 
 	stickyNotes := models.StickyNote{
-		OwnerID:    profileID,
-		NoteColors: req.NoteColors,
-		ContentID:  &content.ID,
+		OwnerID:         profileID,
+		NoteColors:      req.NoteColors,
+		BlocksContentID: &blocksContent.ID,
 	}
 
 	if err := tx.Create(&stickyNotes).Error; err != nil {

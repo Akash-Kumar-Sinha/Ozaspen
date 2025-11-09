@@ -155,9 +155,15 @@ export const createStickyNote = createAsyncThunk(
     blocks: Block[];
   }) => {
     try {
+      const block = blocks[0];
       const { data } = await axios.post(
         `${BACKEND_STICKYNOTES_DOMAIN}/create_new_sticky_note`,
-        { note_colors: noteData.color, blocks: blocks },
+        {
+          note_colors: noteData.color,
+          id: block.id,
+          type: block.type,
+          props: block.props,
+        },
         {
           withCredentials: true,
           headers: {

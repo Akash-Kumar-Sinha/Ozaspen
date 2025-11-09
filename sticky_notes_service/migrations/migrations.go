@@ -10,8 +10,9 @@ func init() {
 	database.LoadInitializers()
 	database.ConnectToDb()
 }
+
 func main() {
-	database.DB.Migrator().DropTable(&models.Collaborator{}, &models.StickyNote{}, &models.ShareLink{}, models.Content{})
+	database.DB.Migrator().DropTable(&models.Collaborator{}, &models.StickyNote{}, &models.ShareLink{}, models.BlocksContent{})
 	if err := database.DB.AutoMigrate(models.ShareLink{}); err != nil {
 		log.Printf("Error during migration of ShareLink: %v", err)
 		panic(err)
@@ -24,8 +25,8 @@ func main() {
 		log.Printf("Error during migration of Collaborator: %v", err)
 		panic(err)
 	}
-	if err := database.DB.AutoMigrate(models.Content{}); err != nil {
-		log.Printf("Error during migration of Content: %v", err)
+	if err := database.DB.AutoMigrate(models.BlocksContent{}); err != nil {
+		log.Printf("Error during migration of BlocksContent: %v", err)
 		panic(err)
 	}
 }

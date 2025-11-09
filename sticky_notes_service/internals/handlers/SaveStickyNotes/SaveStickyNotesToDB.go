@@ -1,7 +1,6 @@
 package savestickynotes
 
 import (
-	"encoding/json"
 	"fmt"
 	"sticky_notes_service/internals/database"
 	"sticky_notes_service/internals/helpers"
@@ -25,27 +24,27 @@ func SaveStickyNotesToDB(req SaveStickyNotesRequest, profileID uuid.UUID) error 
 	}
 
 	var stickyNote models.StickyNote
-	if err := database.DB.Preload("Content").Where("id = ? ", stickyNoteID).First(&stickyNote).Error; err != nil {
+	if err := database.DB.Preload("BlocksContent").Where("id = ? ", stickyNoteID).First(&stickyNote).Error; err != nil {
 		return fmt.Errorf("sticky note not found or user unauthorized: %v", err)
 	}
 
-	if stickyNote.Content == nil {
-		newContent := models.Content{
-			Blocks: json.RawMessage(req.Blocks),
+	if stickyNote.BlocksContent == nil {
+		newContent := models.BlocksContent{
+			BlocksContentDetails: req.Blocks,
 		}
 		if err := database.DB.Create(&newContent).Error; err != nil {
 			return fmt.Errorf("failed to create content: %v", err)
 		}
 
-		stickyNote.ContentID = &newContent.ID
+		stickyNote.BlocksContentID = &newContent.ID
 		if err := database.DB.Save(&stickyNote).Error; err != nil {
 			return fmt.Errorf("failed to link content: %v", err)
 		}
 		return nil
 	}
 
-	stickyNote.Content.Blocks = json.RawMessage(req.Blocks)
-	if err := database.DB.Save(stickyNote.Content).Error; err != nil {
+	stickyNote.BlocksContent.BlocksContentDetails = req.Blocks
+	if err := database.DB.Save(stickyNote.BlocksContent).Error; err != nil {
 		return fmt.Errorf("failed to save content: %v", err)
 	}
 

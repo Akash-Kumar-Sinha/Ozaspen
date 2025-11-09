@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	authmodels "sticky_notes_service/internals/models/auth_users.models"
 
 	"github.com/google/uuid"
@@ -16,8 +15,8 @@ type StickyNote struct {
 	Title      string `gorm:"default:'Untitled Sticky Note';not null"`
 	NoteColors string `gorm:"not null"`
 
-	ContentID *uuid.UUID `gorm:"type:uuid;uniqueIndex"`
-	Content   *Content   `gorm:"foreignKey:ContentID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	BlocksContentID *uuid.UUID     `gorm:"type:uuid;uniqueIndex"`
+	BlocksContent   *BlocksContent `gorm:"foreignKey:BlocksContentID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 
 	ShareLinkID *uuid.UUID `gorm:"type:uuid;index"`
 	ShareLink   *ShareLink `gorm:"foreignKey:ShareLinkID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
@@ -42,8 +41,8 @@ type Collaborator struct {
 	Role Role `gorm:"type:text;not null;default:'viewer'"`
 }
 
-type Content struct {
+type BlocksContent struct {
 	authmodels.GormModel
-	Changes ChangesList     `gorm:"type:jsonb;not null;default:'[]'" json:"Changes"`
-	Blocks  json.RawMessage `gorm:"type:jsonb;not null;default:'[]'" json:"Blocks"`
+	Changes              ChangesList `gorm:"type:jsonb;not null;default:'[]'" json:"Changes"`
+	BlocksContentDetails Blocks      `gorm:"type:jsonb;not null;default:'[]'" json:"BlocksContentDetails"`
 }

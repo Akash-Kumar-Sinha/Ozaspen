@@ -1,10 +1,10 @@
 package ws
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"sticky_notes_service/internals/models"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +22,7 @@ var upgrader = websocket.Upgrader{
 
 type Room struct {
 	clients ClientLists
-	blocks  json.RawMessage
+	blocks  models.Blocks
 	sync.RWMutex
 }
 
@@ -50,7 +50,7 @@ func NewHub() *Hub {
 	return h
 }
 
-func NewRoom(blocks json.RawMessage) *Room {
+func NewRoom(blocks models.Blocks) *Room {
 	return &Room{
 		clients: make(ClientLists),
 		blocks:  blocks,

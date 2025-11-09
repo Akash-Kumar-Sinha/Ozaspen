@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"encoding/json"
 	"fmt"
 	"sticky_notes_service/internals/database"
 	savestickynotes "sticky_notes_service/internals/handlers/SaveStickyNotes"
@@ -9,7 +8,7 @@ import (
 	"sticky_notes_service/internals/models"
 )
 
-func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) (json.RawMessage, error) {
+func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) (models.Blocks, error) {
 	stickyNoteUUID, err := helpers.ParseUuid(stickyNoteID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid sticky note ID: %v", err)
@@ -21,10 +20,10 @@ func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) (json.RawMe
 
 	var stickyNote models.StickyNote
 	if err := database.DB.
-		Preload("Content").
+		Preload("BlocksContent").
 		First(&stickyNote, "id = ?", stickyNoteUUID).Error; err != nil {
 		return nil, fmt.Errorf("error loading sticky note from DB: %v", err)
 	}
 
-	return stickyNote.Content.Blocks, nil
+	return stickyNote.BlocksContent.BlocksContentDetails, nil
 }
