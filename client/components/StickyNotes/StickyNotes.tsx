@@ -117,11 +117,11 @@ const StickyNotes = memo(
       }
 
       if (timeSinceLastSave >= MAX_SAVE_INTERVAL) {
-        dispatch(autoSaveBlocks({ blocks, ID }));
+        dispatch(autoSaveBlocks({ blocks, ID, editor }));
       } else {
         const delay = Math.max(100, MAX_SAVE_INTERVAL - timeSinceLastSave);
         saveTimeoutRef.current = setTimeout(() => {
-          dispatch(autoSaveBlocks({ blocks, ID }));
+          dispatch(autoSaveBlocks({ blocks, ID, editor }));
         }, delay);
       }
 
@@ -130,7 +130,7 @@ const StickyNotes = memo(
           clearTimeout(saveTimeoutRef.current);
         }
       };
-    }, [blocks, isConnected, dispatch, ID]);
+    }, [blocks, isConnected, dispatch, ID, editor]);
 
     const isDarkBackground = NoteColors === "black";
 

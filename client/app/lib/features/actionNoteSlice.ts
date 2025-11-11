@@ -8,7 +8,14 @@ import axios from "axios";
 import { BACKEND_STICKYNOTES_DOMAIN } from "../constant";
 import { getSocket } from "./socketSlice";
 import { RootState } from "../store";
-import { Block } from "@blocknote/core";
+import {
+  Block,
+  BlockNoteEditor,
+  DefaultBlockSchema,
+  DefaultInlineContentSchema,
+  DefaultStyleSchema,
+} from "@blocknote/core";
+import { TrackEditor } from "@/lib/TrackEditor";
 
 export interface stickyNotePermission {
   CanEdit: boolean;
@@ -43,8 +50,31 @@ export const fetchStickyNotesUsingSharedToken = createAsyncThunk(
 
 export const autoSaveBlocks = createAsyncThunk(
   "actionNote/autoSaveBlocks",
-  async ({ blocks, ID }: { blocks: Block[]; ID: string }, thunkAPI) => {
+  async (
+    {
+      blocks,
+      ID,
+      editor,
+    }: {
+      blocks: Block[];
+      ID: string;
+      editor: BlockNoteEditor<
+        DefaultBlockSchema,
+        DefaultInlineContentSchema,
+        DefaultStyleSchema
+      >;
+    },
+    thunkAPI
+  ) => {
     console.log("Auto-saving blocks...");
+    const tracks = TrackEditor(editor);
+    if (!tracks) {
+      console.warn(
+        "No valid block found at cursor position. Auto-save aborted."
+      );
+      return;
+    }
+    const { block, lineNumber } = tracks;
     const socket = getSocket();
     const state = thunkAPI.getState() as RootState;
     const isConnected = state.socket.isConnected;

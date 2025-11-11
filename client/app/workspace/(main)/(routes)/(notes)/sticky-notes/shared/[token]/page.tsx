@@ -177,11 +177,11 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     }
 
     if (timeSinceLastSave >= MAX_SAVE_INTERVAL) {
-      dispatch(autoSaveBlocks({ blocks, ID: stickyNoteDetails?.ID }));
+      dispatch(autoSaveBlocks({ blocks, ID: stickyNoteDetails?.ID, editor }));
     } else {
       const delay = Math.max(100, MAX_SAVE_INTERVAL - timeSinceLastSave);
       saveTimeoutRef.current = setTimeout(() => {
-        dispatch(autoSaveBlocks({ blocks, ID: stickyNoteDetails?.ID }));
+        dispatch(autoSaveBlocks({ blocks, ID: stickyNoteDetails?.ID, editor }));
       }, delay);
     }
 
@@ -190,7 +190,7 @@ export default function SharedStickyNotePage({ params }: PageProps) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [blocks, isConnected, dispatch, stickyNoteDetails?.ID]);
+  }, [blocks, isConnected, dispatch, stickyNoteDetails?.ID, editor]);
 
   if (isLoading) {
     return (
