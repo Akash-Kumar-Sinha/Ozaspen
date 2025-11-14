@@ -36,7 +36,7 @@ type Hub struct {
 type BroadcastRequest struct {
 	StickyNoteID string
 	Sender       *Client
-	Payload      SaveStickyNotesPayload
+	Payload      StickyNoteLinePayload
 }
 
 func NewHub() *Hub {
@@ -69,9 +69,9 @@ func (h *Hub) runBroadcaster() {
 		room.RLock()
 		for c := range room.clients {
 			if c != req.Sender {
-				event := Event{
+				event := BroadCastLineEvent{
 					Type: EventUpdateStickyNote,
-					Data: SaveStickyNotesPayload(req.Payload),
+					Data: StickyNoteLinePayload(req.Payload),
 				}
 				if err := c.conn.WriteJSON(event); err != nil {
 					log.Printf("Broadcast error to client: %v", err)
@@ -86,9 +86,9 @@ func (h *Hub) setUpEventHandlers() {
 	h.handlers[EventSaveStickyNote] = SaveAndBroadcastNotes
 }
 
-func (m *Hub) routeEvent(event Event, client *Client, hub *Hub) error {
+func (m *Hub) routeEvent(event BroadCastLineEvent, client *Client, hub *Hub, room *Room) error {
 	if handler, ok := m.handlers[event.Type]; ok {
-		return handler(client, event, hub)
+		return handler(client, event, hub, room)
 	}
 	return fmt.Errorf("no handler for event type: %s", event.Type)
 }
@@ -131,19 +131,19 @@ func (h *Hub) AddClient(stickyNoteID string, client *Client) {
 	h.Lock()
 	defer h.Unlock()
 	room, exists := h.rooms[stickyNoteID]
-	blocks, err := LoadStickyNoteBlocksFromDB(stickyNoteID, client)
-	if err != nil {
-		log.Printf("Error loading sticky note blocks: %v", err)
-	}
 	if !exists {
+		blocks, err := LoadStickyNoteBlocksFromDB(stickyNoteID, client)
+		if err != nil {
+			log.Printf("Error loading sticky note blocks: %v", err)
+		}
 		room = NewRoom(blocks)
 		h.rooms[stickyNoteID] = room
 	}
-	initEvent := Event{
+	initEvent := BroadCastBlocksEvent{
 		Type: EventUpdateStickyNote,
 		Data: SaveStickyNotesPayload{
 			StickyNoteID: stickyNoteID,
-			Blocks:       blocks,
+			Blocks:       room.blocks,
 		},
 	}
 	if err := client.conn.WriteJSON(initEvent); err != nil {

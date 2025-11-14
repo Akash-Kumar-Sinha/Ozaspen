@@ -64,7 +64,6 @@ export default function SharedStickyNotePage({ params }: PageProps) {
     useStickyNoteSocketListener({
       stickyNoteId: stickyNoteDetails?.ID,
       editor,
-      setBlocks,
     });
 
   useEffect(() => {

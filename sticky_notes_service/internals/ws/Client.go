@@ -40,14 +40,20 @@ func (client *Client) ReadPump(stickyNoteID string, hub *Hub) {
 			break
 		}
 
-		var req Event
+		var req BroadCastLineEvent
 		if messageType == websocket.TextMessage {
 			if err := json.Unmarshal(payload, &req); err != nil {
 				log.Printf("Error unmarshaling message: %v\n", err)
 				continue
 			}
 
-			if err := client.hub.routeEvent(req, client, hub); err != nil {
+			room, exists := client.rooms[req.Data.StickyNoteID]
+			if !exists {
+				log.Printf("Room not found for sticky note ID: %s\n", req.Data.StickyNoteID)
+				continue
+			}
+
+			if err := client.hub.routeEvent(req, client, hub, room); err != nil {
 				log.Printf("Error handling event: %v\n", err)
 			}
 		}

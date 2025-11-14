@@ -4,28 +4,29 @@ import (
 	"log"
 )
 
-func SaveAndBroadcastNotes(client *Client, event Event, hub *Hub) error {
-	// profileID := client.profileID
-	saveRequest := SaveStickyNotesPayload{
-		StickyNoteID: event.Data.StickyNoteID,
-		Blocks:       event.Data.Blocks,
+func SaveAndBroadcastNotes(client *Client, event BroadCastLineEvent, hub *Hub, room *Room) error {
+
+	profileID := client.profileID
+
+	room.Ot(event)
+	if err := SaveLinesToDb(
+		event.Data.StickyNoteID,
+		event.Data.Blocks,
+		profileID,
+	); err != nil {
+		log.Printf("Error saving lines to database: %v", err)
+		return err
 	}
-	// if err := savestickynotes.SaveStickyNotesToDB(savestickynotes.SaveStickyNotesRequest{
-	// 	StickyNoteID: saveRequest.StickyNoteID,
-	// 	Blocks:       saveRequest.Blocks,
-	// }, profileID); err != nil {
-	// 	log.Printf("Error saving to database: %v", err)
-	// 	return err
-	// }
 
 	select {
 	case hub.broadcastChan <- BroadcastRequest{
-		StickyNoteID: saveRequest.StickyNoteID,
+		StickyNoteID: event.Data.StickyNoteID,
 		Sender:       client,
-		Payload:      saveRequest,
+		Payload:      event.Data,
 	}:
+		log.Printf("Successfully broadcasted line update for sticky note %s", event.Data.StickyNoteID)
 	default:
-		log.Printf("Broadcast queue full — dropping event for %s", saveRequest.StickyNoteID)
+		log.Printf("Broadcast queue full — dropping event for %s", event.Data.StickyNoteID)
 	}
 
 	return nil

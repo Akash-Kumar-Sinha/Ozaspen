@@ -66,43 +66,52 @@ export const autoSaveBlocks = createAsyncThunk(
     },
     thunkAPI
   ) => {
-    console.log("Auto-saving blocks...");
-    const tracks = TrackEditor(editor);
-    if (!tracks) {
-      console.warn(
-        "No valid block found at cursor position. Auto-save aborted."
-      );
-      return;
-    }
-    const { block, lineNumber } = tracks;
     const socket = getSocket();
     const state = thunkAPI.getState() as RootState;
     const isConnected = state.socket.isConnected;
     if (!isConnected || !socket) {
-      console.warn("WebSocket is not connected. Auto-save aborted.");
       return;
     }
 
-    const currentBlocksString = JSON.stringify(blocks);
+    if (blocks.length > 1) {
+      const blocksToSave = blocks.map((block, index) => ({
+        number: index + 1,
+        lineContent: block,
+      }));
 
-    if (
-      currentBlocksString ===
-      JSON.stringify(state.actionNote.stickyNoteDetails?.Content?.Blocks)
-    ) {
-      console.log("No changes detected in blocks. Auto-save skipped.");
-      return;
+      socket.send(
+        JSON.stringify({
+          type: "save_sticky_note",
+          data: {
+            sticky_note_id: ID,
+            blocks: blocksToSave,
+          },
+        })
+      );
+    } else {
+      const tracks = TrackEditor(editor);
+      if (!tracks) {
+        return;
+      }
+      const { block, lineNumber } = tracks;
+
+      socket.send(
+        JSON.stringify({
+          type: "save_sticky_note",
+          data: {
+            sticky_note_id: ID,
+            blocks: [
+              {
+                number: lineNumber,
+                lineContent: block,
+              },
+            ],
+          },
+        })
+      );
     }
-    socket.send(
-      JSON.stringify({
-        type: "save_sticky_note",
-        data: {
-          sticky_note_id: ID,
-          blocks: blocks,
-        },
-      })
-    );
+
     await new Promise((resolve) => setTimeout(resolve, 100));
-
     return;
   }
 );

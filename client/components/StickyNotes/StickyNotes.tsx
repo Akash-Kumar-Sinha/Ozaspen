@@ -98,7 +98,6 @@ const StickyNotes = memo(
       useStickyNoteSocketListener({
         stickyNoteId: ID,
         editor,
-        setBlocks,
       });
 
     useEffect(() => {
@@ -624,6 +623,7 @@ const StickyNotes = memo(
             editor={editor}
             customTheme={customTheme}
             setBlock={setBlocks}
+            isReceivingUpdate={hookIsReceivingUpdate}
           />
         </main>
         {!isMaximized &&

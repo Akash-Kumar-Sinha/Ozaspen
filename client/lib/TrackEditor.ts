@@ -19,6 +19,5 @@ export function TrackEditor(
 
   const block = cursor.block;
   const lineNumber = editor.document.findIndex((b) => b.id === block.id);
-  console.log("update blocks: ", lineNumber, block);
   return { block, lineNumber: lineNumber + 1 };
 }

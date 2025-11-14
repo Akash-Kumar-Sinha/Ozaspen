@@ -17,12 +17,14 @@ interface EditorProps {
   customTheme: Theme;
   setBlock?: React.Dispatch<React.SetStateAction<Block[]>>;
   editable?: boolean;
+  isReceivingUpdate?: boolean;
 }
 const Editor = ({
   editor,
   customTheme,
   setBlock,
   editable = true,
+  isReceivingUpdate = false,
 }: EditorProps) => {
   return (
     <div
@@ -34,7 +36,10 @@ const Editor = ({
         theme={customTheme}
         editable={editable}
         onChange={() => {
-          setBlock?.(editor.document);
+          if (!isReceivingUpdate) {
+            console.log("📝 Editor onChange - calling setBlock");
+            setBlock?.(editor.document);
+          }
         }}
       />
     </div>
