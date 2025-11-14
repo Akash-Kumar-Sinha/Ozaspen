@@ -6,13 +6,12 @@ import (
 	"sticky_notes_service/internals/models"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 )
 
 type CreateNewStickyNoteRequest struct {
-	NoteColors string       `json:"note_colors" binding:"required"`
-	ID         string       `json:"id" binding:"required"`
-	Type       string       `json:"type" binding:"required"`
-	Props      models.Props `json:"props" binding:"required"`
+	NoteColors string         `json:"note_colors" binding:"required"`
+	Line       datatypes.JSON `json:"line" binding:"required"`
 }
 
 func CreateNewStickyNote(c *gin.Context) {
@@ -32,14 +31,12 @@ func CreateNewStickyNote(c *gin.Context) {
 	}()
 
 	blocksContent := models.BlocksContent{
-		BlocksContentDetails: models.Blocks{
+		Blocks: []models.Line{
 			{
-				ID:    req.ID,
-				Type:  req.Type,
-				Props: req.Props,
+				LineContent: req.Line,
+				Number:      1,
 			},
 		},
-		Changes: models.ChangesList{},
 	}
 
 	if err := tx.Create(&blocksContent).Error; err != nil {

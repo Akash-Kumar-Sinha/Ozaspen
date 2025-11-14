@@ -8,7 +8,7 @@ import (
 	"sticky_notes_service/internals/models"
 )
 
-func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) (models.Blocks, error) {
+func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) ([]models.Line, error) {
 	stickyNoteUUID, err := helpers.ParseUuid(stickyNoteID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid sticky note ID: %v", err)
@@ -25,5 +25,13 @@ func LoadStickyNoteBlocksFromDB(stickyNoteID string, client *Client) (models.Blo
 		return nil, fmt.Errorf("error loading sticky note from DB: %v", err)
 	}
 
-	return stickyNote.BlocksContent.BlocksContentDetails, nil
+	var blocks []models.Line
+	if err := database.DB.
+		Where("blocks_content_id = ?", stickyNote.BlocksContentID).
+		Order("number asc").
+		Find(&blocks).Error; err != nil {
+		return nil, fmt.Errorf("error loading blocks from DB: %v", err)
+	}
+
+	return blocks, nil
 }

@@ -16,5 +16,5 @@ const (
 
 type SaveStickyNotesPayload struct {
 	StickyNoteID string        `json:"sticky_note_id" binding:"required"`
-	Blocks       models.Blocks `json:"blocks" binding:"required"`
+	Blocks       []models.Line `json:"blocks" binding:"required"`
 }

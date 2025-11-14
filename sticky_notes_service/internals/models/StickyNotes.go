@@ -43,6 +43,5 @@ type Collaborator struct {
 
 type BlocksContent struct {
 	authmodels.GormModel
-	Changes              ChangesList `gorm:"type:jsonb;not null;default:'[]'" json:"Changes"`
-	BlocksContentDetails Blocks      `gorm:"type:jsonb;not null;default:'[]'" json:"BlocksContentDetails"`
+	Blocks []Line `gorm:"foreignKey:BlocksContentID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

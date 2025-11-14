@@ -22,7 +22,7 @@ var upgrader = websocket.Upgrader{
 
 type Room struct {
 	clients ClientLists
-	blocks  models.Blocks
+	blocks  []models.Line
 	sync.RWMutex
 }
 
@@ -50,7 +50,7 @@ func NewHub() *Hub {
 	return h
 }
 
-func NewRoom(blocks models.Blocks) *Room {
+func NewRoom(blocks []models.Line) *Room {
 	return &Room{
 		clients: make(ClientLists),
 		blocks:  blocks,
