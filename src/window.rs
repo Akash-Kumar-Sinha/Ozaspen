@@ -4,15 +4,19 @@ use tokio::runtime::Runtime;
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
+use renderer::{TextEngine, UiRenderer};
+use ui::HeaderUi;
 use crate::theme;
 
 pub struct RenderState {
-    window: Arc<Window>,
+    pub window: Arc<Window>,
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     pub size: PhysicalSize<u32>,
+    ui_renderer: UiRenderer,
+    pub header: HeaderUi,
 }
 
 impl RenderState {
@@ -39,6 +43,10 @@ impl RenderState {
         config.height = height;
         surface.configure(&device, &config);
 
+        let ui_renderer = UiRenderer::new(&device, &queue, config.format);
+        let mut text_engine = TextEngine::new();
+        let header = HeaderUi::new(&device, &queue, &ui_renderer, &mut text_engine);
+
         Ok(Self {
             window,
             surface,
@@ -46,6 +54,8 @@ impl RenderState {
             queue,
             config,
             size,
+            ui_renderer,
+            header,
         })
     }
 
@@ -76,8 +86,8 @@ impl RenderState {
                 let (r, g, b, a) = theme().clear_color_linear();
 
                 {
-                    let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                        label: Some("Theme Clear Pass"),
+                    let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        label: Some("UI Render Pass"),
                         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                             view: &view,
                             resolve_target: None,
@@ -92,6 +102,15 @@ impl RenderState {
                         timestamp_writes: None,
                         multiview_mask: None,
                     });
+
+                    let screen_size = [self.size.width as f32, self.size.height as f32];
+                    self.header.draw(
+                        &self.device,
+                        &self.queue,
+                        &mut render_pass,
+                        &self.ui_renderer,
+                        screen_size,
+                    );
                 }
 
                 self.queue.submit(std::iter::once(encoder.finish()));

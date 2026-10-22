@@ -8,6 +8,10 @@ winit = { workspace = true }
 wgpu = { workspace = true }
 tokio = { workspace = true }
 theme = { workspace = true }
+ui = { workspace = true }
+renderer = { workspace = true }
+bytemuck = { workspace = true }
+cosmic-text = { workspace = true }
 
 [workspace]
 resolver = "3"
@@ -41,3 +45,7 @@ serde_json = "1.0.154"
 winit = "0.30.13"
 wgpu = "30.0.1"
 theme = { path = "crates/theme" }
+ui = { path = "crates/ui" }
+renderer = { path = "crates/renderer" }
+cosmic-text = "0.19.0"
+bytemuck = { version = "1.25.2", features = ["derive"] }

@@ -9,8 +9,8 @@ pub const COLOR_YELLOW: [f32; 4] = [0.90, 0.63, 0.10, 1.0];
 pub const COLOR_BLUE: [f32; 4] = [0.10, 0.67, 0.85, 1.0];
 pub const COLOR_AMBER: [f32; 4] = [0.76, 0.50, 0.0, 1.0];
 pub const COLOR_GRAY_MUTED: [f32; 4] = [0.65, 0.65, 0.70, 1.0];
-pub const COLOR_GRAY_DARK: [f32; 4] = rgb(2, 2, 2);
-pub const COLOR_GRAY_SURFACE: [f32; 4] = rgb(4, 4, 4);
+pub const COLOR_GRAY_DARK: [f32; 4] = rgb(4, 4, 4);
+pub const COLOR_GRAY_SURFACE: [f32; 4] = rgb(2, 2, 2);
 pub const COLOR_GRAY_ELEVATED: [f32; 4] = rgb(1, 1, 1);
 pub const COLOR_GRAY_CONTROL: [f32; 4] = rgb(5, 5, 5);
 pub const COLOR_DIFF_ADD_BG: [f32; 4] = [0.008, 0.020, 0.008, 1.0];
@@ -28,8 +28,6 @@ pub struct Theme {
     pub surface_raised: [f32; 4],
     pub header_background: [f32; 4],
     pub sidebar_background: [f32; 4],
-    pub border: [f32; 4],
-    pub border_subtle: [f32; 4],
     pub text_primary: [f32; 4],
     pub text_secondary: [f32; 4],
     pub text_muted: [f32; 4],
@@ -64,8 +62,6 @@ impl Theme {
             surface_raised: COLOR_GRAY_ELEVATED,
             header_background: COLOR_NEAR_BLACK,
             sidebar_background: COLOR_NEAR_BLACK,
-            border: COLOR_GRAY_DARK,
-            border_subtle: COLOR_GRAY_DARK,
             text_primary: COLOR_WHITE,
             text_secondary: rgb(220, 220, 225),
             text_muted: COLOR_GRAY_MUTED,

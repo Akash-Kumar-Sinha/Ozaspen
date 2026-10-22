@@ -4,5 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-cosmic-text = "0.19.0"
-wgpu = "30.0.1"
+cosmic-text = { workspace = true }
+wgpu = { workspace = true }
+bytemuck = { workspace = true }
