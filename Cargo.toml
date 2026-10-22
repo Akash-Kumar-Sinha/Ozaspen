@@ -1,0 +1,32 @@
+[workspace]
+resolver = "3"
+members = [
+    "apps/desktop",
+    "crates/core",
+    "crates/storage",
+    "crates/content",
+    "crates/sync",
+    "crates/p2p",
+    "crates/config",
+    "crates/platform",
+    "crates/renderer",
+    "crates/ui", "crates/theme",
+]
+
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+thiserror = "2.0.21"
+tokio = { version = "1.54.0", features = ["rt-multi-thread", "macros", "sync"] }
+tracing = "0.1.44"
+iroh = "1.4.1"
+uuid = { version = "1.28.0", features = ["v4", "serde"] }
+directories = "6.0.0"
+chrono = { version = "0.4.45", features = ["serde"] }
+serde_json = "1.0.154"
+winit = "0.30.13"
+wgpu = "30.0.1"

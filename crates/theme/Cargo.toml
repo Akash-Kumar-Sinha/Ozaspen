@@ -1,0 +1,6 @@
+[package]
+name = "theme"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
