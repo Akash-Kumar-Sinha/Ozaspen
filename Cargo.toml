@@ -1,7 +1,17 @@
+[package]
+name = "ozaspen"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+winit = { workspace = true }
+wgpu = { workspace = true }
+tokio = { workspace = true }
+theme = { workspace = true }
+
 [workspace]
 resolver = "3"
 members = [
-    "apps/desktop",
     "crates/core",
     "crates/storage",
     "crates/content",
@@ -10,9 +20,9 @@ members = [
     "crates/config",
     "crates/platform",
     "crates/renderer",
-    "crates/ui", "crates/theme",
+    "crates/ui",
+    "crates/theme",
 ]
-
 
 [workspace.package]
 version = "0.1.0"
@@ -30,3 +40,4 @@ chrono = { version = "0.4.45", features = ["serde"] }
 serde_json = "1.0.154"
 winit = "0.30.13"
 wgpu = "30.0.1"
+theme = { path = "crates/theme" }
