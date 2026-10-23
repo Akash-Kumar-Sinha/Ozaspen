@@ -1,8 +1,16 @@
 use super::types::RenderState;
 use crate::theme;
+use std::time::Instant;
+use ui::HEADER_HEIGHT;
 
 impl RenderState {
     pub fn render(&mut self) {
+        let now = Instant::now();
+        let dt = (now - self.last_frame).as_secs_f32();
+        self.last_frame = now;
+
+        self.toggle.update(dt, &self.queue);
+
         match self.surface.get_current_texture() {
             wgpu::CurrentSurfaceTexture::Success(frame)
             | wgpu::CurrentSurfaceTexture::Suboptimal(frame) => {
@@ -37,6 +45,14 @@ impl RenderState {
                     });
 
                     let screen_size = [self.size.width as f32, self.size.height as f32];
+                    self.sidebar.draw(
+                        &self.device,
+                        &self.queue,
+                        &mut render_pass,
+                        &self.ui_renderer,
+                        screen_size,
+                        HEADER_HEIGHT,
+                    );
                     self.header.draw(
                         &self.device,
                         &self.queue,
@@ -44,10 +60,15 @@ impl RenderState {
                         &self.ui_renderer,
                         screen_size,
                     );
+                    self.toggle.render(&mut render_pass);
                 }
 
                 self.queue.submit(std::iter::once(encoder.finish()));
                 self.queue.present(frame);
+
+                if self.toggle.is_animating() {
+                    self.window.request_redraw();
+                }
             }
             wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
                 self.resize(self.size);

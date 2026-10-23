@@ -17,6 +17,8 @@ impl HeaderUi {
         bg_batch.add_rect(0.0, 0.0, width, HEADER_HEIGHT, COLOR_NEAR_BLACK);
 
         let cy = HEADER_HEIGHT * 0.5;
+
+        // Window control buttons
         let close_cx = width - 16.0 - BTN_RADIUS;
         let max_cx = close_cx - BTN_SPACING;
         let min_cx = max_cx - BTN_SPACING;
@@ -66,7 +68,7 @@ impl HeaderUi {
 
         renderer.draw(device, queue, render_pass, screen_size, &bg_batch, None);
 
-        let text_x = 18.0;
+        let text_x = 46.0;
         let text_y = (HEADER_HEIGHT - self.title_text.height) * 0.5;
         let mut title_batch = UiBatch::new();
         title_batch.add_textured_rect(

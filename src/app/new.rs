@@ -1,5 +1,6 @@
 use super::types::App;
 use tokio::runtime::Runtime;
+use winit::keyboard::ModifiersState;
 
 impl App {
     pub fn new(rt: Runtime) -> Self {
@@ -7,6 +8,7 @@ impl App {
             rt,
             state: None,
             cursor_pos: (0.0, 0.0),
+            modifiers: ModifiersState::empty(),
         }
     }
 }

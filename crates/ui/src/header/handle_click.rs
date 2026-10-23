@@ -6,6 +6,10 @@ impl HeaderUi {
             return HeaderAction::None;
         }
 
+        if x <= 42.0 {
+            return HeaderAction::None;
+        }
+
         let cy = HEADER_HEIGHT * 0.5;
         let close_cx = width - 16.0 - BTN_RADIUS;
         let max_cx = close_cx - BTN_SPACING;

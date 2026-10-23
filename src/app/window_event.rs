@@ -23,6 +23,12 @@ impl App {
             WindowEvent::MouseInput { state, button, .. } => {
                 self.handle_mouse_input(event_loop, state, button);
             }
+            WindowEvent::ModifiersChanged(modifiers) => {
+                self.handle_modifiers_changed(modifiers);
+            }
+            WindowEvent::KeyboardInput { event, .. } => {
+                self.handle_keyboard_input(event_loop, event);
+            }
             WindowEvent::Resized(physical_size) => {
                 self.handle_resized(physical_size);
             }

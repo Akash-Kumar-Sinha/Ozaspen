@@ -10,3 +10,4 @@ theme = { workspace = true }
 renderer = { workspace = true }
 wgpu = { workspace = true }
 cosmic-text = { workspace = true }
+bytemuck = { workspace = true }

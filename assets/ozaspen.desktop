@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ozaspen
+Comment=Local-first creative workspace
+Exec=ozaspen
+Terminal=false
+Categories=Utility;TextEditor;Office;
+Keywords=notes;markdown;workspace;ozas;

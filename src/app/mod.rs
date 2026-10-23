@@ -1,6 +1,8 @@
 mod cursor_left;
 mod cursor_moved;
 mod handler;
+mod keyboard_input;
+mod modifiers_changed;
 mod mouse_input;
 mod new;
 mod redraw_requested;

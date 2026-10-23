@@ -5,4 +5,4 @@ mod new;
 mod types;
 mod update_hover;
 
-pub use types::{HEADER_HEIGHT, HeaderAction, HeaderUi, HoveredButton};
+pub use types::{HEADER_HEIGHT, HeaderAction, HeaderUi, HoveredButton, TOGGLE_BTN_CX};

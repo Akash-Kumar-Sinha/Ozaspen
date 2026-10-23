@@ -2,8 +2,9 @@ use super::types::RenderState;
 use renderer::{TextEngine, UiRenderer};
 use std::error::Error;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::runtime::Runtime;
-use ui::HeaderUi;
+use ui::{HEADER_HEIGHT, HeaderUi, SidebarUi, TOGGLE_BTN_CX, Toggle};
 use winit::window::Window;
 
 impl RenderState {
@@ -33,6 +34,14 @@ impl RenderState {
         let ui_renderer = UiRenderer::new(&device, &queue, config.format);
         let mut text_engine = TextEngine::new();
         let header = HeaderUi::new(&device, &queue, &ui_renderer, &mut text_engine);
+        let sidebar = SidebarUi::new();
+
+        let mut toggle = Toggle::open(&device, config.format);
+        toggle.resize(width, height);
+        toggle.set_scale(0.8);
+        toggle.set_anchor(TOGGLE_BTN_CX, HEADER_HEIGHT * 0.5);
+
+        let last_frame = Instant::now();
 
         Ok(Self {
             window,
@@ -43,6 +52,9 @@ impl RenderState {
             size,
             ui_renderer,
             header,
+            sidebar,
+            toggle,
+            last_frame,
         })
     }
 }
