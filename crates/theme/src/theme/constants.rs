@@ -1,0 +1,20 @@
+use crate::color::rgb;
+
+pub const COLOR_BLACK: [f32; 4] = rgb(0, 0, 0);
+pub const COLOR_NEAR_BLACK: [f32; 4] = rgb(1, 1, 1);
+pub const COLOR_WHITE: [f32; 4] = rgb(255, 255, 255);
+pub const COLOR_RED: [f32; 4] = [0.74, 0.21, 0.16, 1.0];
+pub const COLOR_GREEN: [f32; 4] = rgb(9, 232, 111);
+pub const COLOR_YELLOW: [f32; 4] = [0.90, 0.63, 0.10, 1.0];
+pub const COLOR_BLUE: [f32; 4] = [0.10, 0.67, 0.85, 1.0];
+pub const COLOR_AMBER: [f32; 4] = [0.76, 0.50, 0.0, 1.0];
+pub const COLOR_GRAY_MUTED: [f32; 4] = [0.65, 0.65, 0.70, 1.0];
+pub const COLOR_GRAY_DARK: [f32; 4] = rgb(4, 4, 4);
+pub const COLOR_GRAY_SURFACE: [f32; 4] = rgb(2, 2, 2);
+pub const COLOR_GRAY_ELEVATED: [f32; 4] = rgb(1, 1, 1);
+pub const COLOR_GRAY_CONTROL: [f32; 4] = rgb(5, 5, 5);
+pub const COLOR_DIFF_ADD_BG: [f32; 4] = [0.008, 0.020, 0.008, 1.0];
+pub const COLOR_DIFF_DELETE_BG: [f32; 4] = [0.020, 0.004, 0.004, 1.0];
+pub const COLOR_DIFF_MODIFIED_BG: [f32; 4] = [0.020, 0.016, 0.004, 1.0];
+pub const COLOR_DIFF_CHIP_DELETE_BG: [f32; 4] = [0.28, 0.10, 0.10, 1.0];
+pub const COLOR_DIFF_CHIP_DELETE_FG: [f32; 4] = [0.95, 0.65, 0.65, 0.90];

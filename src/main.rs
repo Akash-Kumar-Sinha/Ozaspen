@@ -1,21 +1,11 @@
 use std::error::Error;
-use std::sync::OnceLock;
 use winit::event_loop::{ControlFlow, EventLoop};
 
-use theme::Theme;
-
 mod app;
+mod theme;
 mod window;
 
-static THEME: OnceLock<Theme> = OnceLock::new();
-
-pub fn theme() -> &'static Theme {
-    THEME.get_or_init(Theme::dark)
-}
-
-pub fn with_theme<R>(f: impl FnOnce(&Theme) -> R) -> R {
-    f(theme())
-}
+pub use theme::{theme, with_theme};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let rt = tokio::runtime::Builder::new_current_thread()

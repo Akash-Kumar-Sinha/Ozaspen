@@ -63,12 +63,10 @@ impl UiBatch {
         let base_idx = self.vertices.len() as u32;
 
         self.vertices.push(UiVertex::color([x, y], color));
-        self.vertices
-            .push(UiVertex::color([x + width, y], color));
+        self.vertices.push(UiVertex::color([x + width, y], color));
         self.vertices
             .push(UiVertex::color([x + width, y + height], color));
-        self.vertices
-            .push(UiVertex::color([x, y + height], color));
+        self.vertices.push(UiVertex::color([x, y + height], color));
 
         self.indices.extend_from_slice(&[
             base_idx,
@@ -80,6 +78,7 @@ impl UiBatch {
         ]);
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_textured_rect(
         &mut self,
         x: f32,
@@ -94,8 +93,7 @@ impl UiBatch {
     ) {
         let base_idx = self.vertices.len() as u32;
 
-        self.vertices
-            .push(UiVertex::text([x, y], [u0, v0], color));
+        self.vertices.push(UiVertex::text([x, y], [u0, v0], color));
         self.vertices
             .push(UiVertex::text([x + width, y], [u1, v0], color));
         self.vertices
@@ -150,10 +148,14 @@ impl UiBatch {
         let ny = dx / len * (thickness * 0.5);
 
         let base = self.vertices.len() as u32;
-        self.vertices.push(UiVertex::color([x0 + nx, y0 + ny], color));
-        self.vertices.push(UiVertex::color([x1 + nx, y1 + ny], color));
-        self.vertices.push(UiVertex::color([x1 - nx, y1 - ny], color));
-        self.vertices.push(UiVertex::color([x0 - nx, y0 - ny], color));
+        self.vertices
+            .push(UiVertex::color([x0 + nx, y0 + ny], color));
+        self.vertices
+            .push(UiVertex::color([x1 + nx, y1 + ny], color));
+        self.vertices
+            .push(UiVertex::color([x1 - nx, y1 - ny], color));
+        self.vertices
+            .push(UiVertex::color([x0 - nx, y0 - ny], color));
 
         self.indices
             .extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
@@ -237,38 +239,37 @@ impl UiRenderer {
             mapped_at_creation: false,
         });
 
-        let bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("UI Bind Group Layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::VERTEX,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
+        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("UI Bind Group Layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            multisampled: false,
-                        },
-                        count: None,
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-            });
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+            ],
+        });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("UI Pipeline Layout"),

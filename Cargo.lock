@@ -2054,7 +2054,6 @@ dependencies = [
  "taffy",
  "theme",
  "wgpu",
- "winit",
 ]
 
 [[package]]

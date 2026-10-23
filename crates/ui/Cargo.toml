@@ -6,7 +6,6 @@ edition.workspace = true
 [dependencies]
 accesskit = "0.25.1"
 taffy = "0.15.0"
-winit = { workspace = true }
 theme = { workspace = true }
 renderer = { workspace = true }
 wgpu = { workspace = true }
